@@ -1,0 +1,106 @@
+#!/bin/bash
+# name:    buxter
+# author:  grimi
+# abot:    build ArchLinux pkg from fm menu
+# require: makepkg (part of pacman),xterm
+
+BLDRED='\e[1;31m'
+BLDWHI='\e[1;37m'
+BLDYEL='\e[1;33m'
+TXTRES='\e[0m'
+
+NAME="${0/*\//}"
+
+
+case ${LANG%_*} in
+   pl)
+      MSG_US="SKŁADNIA"
+      MSG_TR="uruchom w xterm"
+      MSG_DG="nie wykonuj, pokaż linie komend"
+      MSG_EX="Pakiet już istnieje. Zbudować ponownie (t/N) ? "
+      ANS_EX="t"
+      MSG_CC="Budować z ccache (T/n) ? "
+      ANS_CC="n"
+      MSG_32="Budować pakiet 32 bitowy (t/N) ? "
+      ANS_32="t"
+   ;;
+   *)
+      MSG_US="USAGE"
+      MSG_TR="exec in xterm"
+      MSG_DG="don't exec, show cmd line"
+      MSG_EX="Package already exists. Build again (y/N) ? "
+      ANS_EX="y"
+      MSG_CC="Build with ccache (Y/n) ? "
+      ANS_CC="n"
+      MSG_32="Build 32 bit package (y/N) ? "
+      ANS_32="y"
+   ;;
+esac
+
+
+
+usage() {
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-t] [-d] ${BLDRED}<PKGBULD>${TXTRES}"
+   echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}" 
+   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}" 
+   exit 1
+}
+
+([ "$1" == "-h" ] || [ "$1" == "--help" ]) && usage
+
+[ "$1" == "-t" ] && TERMODE=1 && shift
+
+[ "$1" == "-d" ] && DEBUGMODE=1 && shift
+
+if [ ! -f PKGBUILD ]; then
+   if [ -z "$1" ]; then
+      usage
+   else
+      [ "${1/*\//}" != "PKGBUILD" ] && usage
+   fi
+fi
+
+source /etc/makepkg.conf
+[ -f ~/.makepkg.conf ] && source ~/.makepkg.conf
+
+cd "${1%/*}"
+
+source PKGBUILD
+
+[ "${arch[0]}" = "any" ] && archpkg="any" || archpkg="$CARCH"
+
+pkgdef="package='${pkgname[0]}-${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
+
+if [ "${archpkg}" == "x86_64" ]; then
+   if [ -n "$(pacman -Qq gcc-multilib)" ]; then
+      pkgdef="${pkgdef} ; echo ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32}${TXTRES}' ; \
+         read res32 ; [ \"\$res32\" == '$ANS_32' ] && bit32='linux32 ' && \
+         package='${pkgname}-${pkgver}-${pkgrel}-i686${PKGEXT}'"
+   fi
+fi
+
+if [ "$archpkg" != "any" ]; then
+   for x in ${BUILDENV[@]}; do
+      if [ "$x" == "ccache" ]; then
+         cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC}${TXTRES}' ; \
+            read cres ; [ \"\$cres\" == '$ANS_CC' ] \
+            && export CCACHE_DISABLE=1 || unset CCACHE_DISABLE ; "
+         break
+      fi
+   done
+fi
+
+cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo ; echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
+   echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX}${TXTRES}' ; read bres ; \
+   [ \"\$bres\" == '$ANS_EX' ] && (${cmd}\${bit32}makepkg -fcs) ; else (${cmd}\${bit32}makepkg -cs) ; fi"
+
+
+if [ -n "$DEBUGMODE" ]; then
+   echo "$cmd"
+elif [ -z "$TERMODE" ]; then
+   eval "$cmd"
+else
+   xterm -fg gray -bg black -T "::: $NAME :::" -e "$cmd ; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
+fi
+
+

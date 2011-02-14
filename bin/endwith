@@ -1,0 +1,32 @@
+#!/bin/sh
+# Name:    endwith
+# About:   kill app after master app
+# Author:  grimi
+# License: GNU GPL v3
+
+# variables
+WAIT4=15
+
+# check args
+if [[ -z $1 || -z $2 || "$1" = "-h" || "$1" = "--help" ]]; then
+    echo "USAGE: $(basename "$0") <master app> <app> [args]"
+    exit 1
+fi
+
+# wait for master app
+while ! pidof >/dev/null $1; do
+    sleep 1
+    ((WAIT4--))
+    if [ $WAIT4 = 0 ]; then
+        exit 1
+    fi
+done
+
+# run application
+if [ $WAIT4 != 0 ]; then
+    "$2" "$3" & PID=$!
+    if [ $? = 0 ]; then
+       nohup &>/dev/null sh -c "sleep 1;while pidof >/dev/null '$1'&&pidof '$2'|grep -q $PID;do sleep 1;done&&kill -15 $PID||kill -9 $PID" &
+    fi
+fi
+

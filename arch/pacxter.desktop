@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Install package
+Name[pl]=Instaluj paczkę
+Exec=pacxter %f
+Terminal=false
+Type=Application
+Icon=application-x-archpkg
+MimeType=application/x-archpkg;
+NoDisplay=true

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+## Name:     pacxter v0.1a
+## Author:   grimi (grimi at poczta dot fm)
+## About:    simple xterm "gui" for ArchLinux to installing packages
+## License:  GNU GPL v3
+## Required: pacman,xterm,mime-archpkg
+## Optional: pacman-color,sudo
+
+
+
+## Some variables ##
+PACMAN="/usr/bin/pacman-color"
+[ -f "$PACMAN" ] || PACMAN="${PACMAN%-*}"
+XTERM="/usr/bin/xterm"
+SUDO="/usr/bin/sudo"
+NAME="${0/*\//}"
+
+
+## Lang messages ##
+case "${LANG/_*/}" in
+  pl)
+    MSG_PASSROOT="Podaj hasło roota: "
+    MSG_PASS="Podaj hasło: "
+    MSG_HIT="Naciśnij ::ENTER::"
+    MSG_USAGE="*** Składnia: $NAME [-t] <nazwa paczki> ***\n\t  -t: wykonaj w aktualnym terminalu\n"
+  ;;
+  *)
+    MSG_PASSROOT="Enter root password: "
+    MSG_PASS="Enter password: "
+    MSG_HIT="Press ::ENTER::"
+    MSG_USAGE="*** Usage: $NAME [-t] <package name> ***\n\t  -t: exec in current terminal\n"
+  ;;
+esac
+
+
+## Current term mode ##
+if [ "$1" == "-t" ]; then
+   CURRTERM=1 && shift
+fi
+
+
+## Select proper action ##
+if [ -z "$1" ]; then
+   CMD="echo -e '$MSG_USAGE'"
+elif [ "$USER" = "root" ]; then
+   CMD="$PACMAN 2>&1 -U '$1'"
+elif [ "$($SUDO 2>/dev/null -l $PACMAN -U)" = "$PACMAN -U" ]; then
+   CMD="$SUDO -p '$MSG_PASS' $PACMAN 2>&1 -U '$1'"
+else
+   CMD="echo -n '$MSG_PASSROOT' ; /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'"
+fi
+
+
+## Finaly do what you must do ... ##
+if [ -n "$CURRTERM" ]; then
+   eval "$CMD"
+else
+   $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $CMD ; echo -e '\n$MSG_HIT' ; read"
+fi
+
+
+## End of pacxter ##
+

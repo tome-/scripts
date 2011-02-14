@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Build package
+Name[pl]=Buduj pakiet
+Exec=buxter -t %f
+Terminal=false
+Type=Application
+Icon=terminal
+MimeType=text/x-pkgbuild;
+Categories=System;
+NoDisplay=true

@@ -1,0 +1,66 @@
+#!/bin/bash
+# Name:    uprepo
+# About:   script for Arch Linux to display pacman updates in conky
+# Author:  grimi < grimi at poczta do fm >
+# License: GNU GPL v3
+
+
+#PACOUT="$(LANG=C pacman -Qu|grep 'Targets (.*)')"
+
+#if [ "$PACOUT" = "" ];then
+#  PACNR=0
+#else
+#  PACNR=`echo $PACOUT|sed 's/.*(//;s/).*//'`
+#fi
+
+
+if [ "$1" = "-h" ]; then
+   case ${LANG%_*} in
+      pl) echo "Składnia: [-n(bez koloru)]" ;;
+      *)  echo "Usage: [-n(nocolors)]";;
+   esac
+   exit 1
+fi
+
+PACNR=$(LANG=C pacman -Qqu | grep -Ev "^($ignore)$" | wc -l)
+
+if [ "$1" != "-n" ]; then
+   case $PACNR in
+      0)       SETCOL='${color white}' ;;
+      [1-4])   SETCOL='${color yellow}' ;;
+      [5-9])   SETCOL='${color orange}' ;;
+      *)       SETCOL='${color red}' ;;
+   esac
+   RESCOL='${color}'
+fi
+
+SetMsg() {
+   case $PACNR in
+      0) MSG="no updates" ;;
+      1) MSG="1 package" ;;
+      *) MSG="$1 packages" ;;
+   esac
+}
+
+SetMsg_pl() {
+   NR1=${PACNR:${#PACNR}-1}
+   NR2=${PACNR:${#PACNR}-2}
+   if [ $PACNR = 0 ];then
+      MSG="aktualne"
+   elif [ $PACNR = 1 ];then
+      MSG="1 paczka"
+   elif [ $NR1 -ge 2 ] && [ $NR1 -le 4 ] && [ $[$NR2-$NR1] -ne 10 ]; then
+      MSG="$PACNR paczki"
+   else
+      MSG="$PACNR paczek"
+   fi
+}
+
+case ${LANG%_*} in
+   pl) SetMsg_pl;;
+   *)  SetMsg;;
+esac
+
+echo ${SETCOL}${MSG}${RESCOL}
+
+

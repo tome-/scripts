@@ -1,0 +1,54 @@
+#!/bin/bash
+# Name:     xdgautostart
+# About:    starts autostart .desktops files ( local and sys )
+# Author:   grimi <grimi at poczta dot fm>
+# License:  GNU GPL v3
+# Required: bashv4,grep
+
+
+usage() {
+   echo "USAGE: [-t] <desktop name>"
+   echo "   -t:   test mode; show only which .desktop will be run"
+   exit 1
+}
+
+
+if [ "$1" == "-t" ]; then
+   TEST=1 && shift
+fi
+
+if [ "${1/-h/}" == "" ]; then
+   usage
+fi
+
+DESK="$1"
+
+declare -A tab
+
+for app in /etc/xdg/autostart/*.desktop; do
+   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break
+   tab[${app##*/}]="$app"
+done
+for app in ~/.config/autostart/*.desktop; do
+   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break  
+   tab[${app##*/}]="$app"
+done
+
+for app in ${tab[@]}; do
+   if ( ! grep -iq "hidden=true" "$app" ); then
+      auto="$(grep -wi "onlyshowin=.*$DESK" "$app")"
+      if [ -z "$auto" ]; then
+         grep -wiq "notshowin=.*$DESK" "$app" || auto=1
+      fi
+      if [ -n "$auto" ]; then
+         cmd="$(grep -i 'exec=' "$app")"
+         if [ -n "$TEST" ]; then
+            echo -e "$app:\n\t ==> ${cmd:5}"
+         else
+            ( sleep 0.1 && ${cmd:5} )&
+         fi
+      fi
+   fi
+done
+
+
