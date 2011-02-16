@@ -50,12 +50,12 @@ esac
 # --- variables ---
 declare -a USBTAB CDTAB PARTAB
 declare -a MUSBTAB MCDTAB MPARTAB
-declare -a MEDIAS
+
 
 # --- constans ---
 declare -r MTYPE_USB=0 MTYPE_CDROM=1 MTYPE_PART=2
 declare -r ICONTAB=(drive-removable-media drive-cdrom drive-harddisk)
-declare -r MTYPETAB=(usb cdrom $PARTMSG)  
+declare -r MTYPETAB=(usb cdrom $PARTMSG)
 
 
 
@@ -277,48 +277,45 @@ mediamenu() {
       fi
    fi
 }
-makemediastab() {
-   local x y i=0 uidev nonew devtab=()
-   for x in /dev/disk/by-label/*; do
-      devtab[$i]="$(readlink -f "$x")"
-      MEDIAS[$i]="$x" ; ((i++))
+splitmedias() {
+   local uidev nonew devtab=() medias=()
+   local i=0 media medi dtype
+   for media in /dev/disk/by-label/*; do
+      devtab[$i]="$(readlink -f "$media")"
+      medias[$i]="$media" ; ((i++))
    done
-   for x in /dev/disk/by-uuid/*; do
-      uidev=$(readlink -f "$x") ; nonew=
-      for y in ${devtab[@]}; do
-         if [ "$uidev" == "$y" ]; then
+   for media in /dev/disk/by-uuid/*; do
+      uidev=$(readlink -f "$media") ; nonew=
+      for medi in ${devtab[@]}; do
+         if [ "$uidev" == "$medi" ]; then
             nonew=1 ; break
          fi
       done
       if [ -z "$nonew" ] ; then
-         MEDIAS[$i]="$uidev" ; ((i++))
+         medias[$i]="$uidev" ; ((i++))
       fi
    done
-}
-splitmedias() {
-   local Ux=0 Cx=0 Px=0 Uy=0 Cy=0 Py=0
-   local media dtype
-   for media in ${MEDIAS[@]}; do
+   for media in ${medias[@]}; do
       disktype "$media" ; dtype=$?
       if ( ismounted "$media" ); then
          case $dtype in
             $MTYPE_USB)
-               MUSBTAB[$Uy]="$media" ; ((Uy++)) ;;
+               MUSBTAB[${#MUSBTAB[@]}]="$media" ;;
             $MTYPE_CDROM)
-               MCDTAB[$Cy]="$media" ; ((Cy++)) ;;
+               MCDTAB[${#MCDTAB[@]}]="$media" ;;
             $MTYPE_PART)
                if (! ismountedsys "$media" ); then
-                  MPARTAB[$Py]="$media" ; ((Py++))
+                  MPARTAB[${#MPARTAB[@]}]="$media"
                fi ;;
          esac
       else
          case $dtype in
             $MTYPE_USB)
-               USBTAB[$Ux]="$media" ; ((Ux++)) ;;
+               USBTAB[${#USBTAB[@]}]="$media" ;;
             $MTYPE_CDROM)
-               CDTAB[$Cx]="$media" ; ((Cx++)) ;;
+               CDTAB[${#CDTAB[@]}]="$media" ;;
             $MTYPE_PART)
-               PARTAB[$Px]="$media" ; ((Px++)) ;; 
+               PARTAB[${#PARTAB[@]}]="$media" ;; 
          esac 
       fi
    done 
@@ -328,7 +325,6 @@ splitmedias() {
 
 ########## Begin menu gen ####################################
 
-makemediastab
 splitmedias
 echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 echo "<openbox_pipe_menu>"

@@ -8,6 +8,7 @@ prefs="$HOME/.cursor"
 store=0
 
 findcursors() {
+ local sysp i
  sysp="/usr/share/icons"
  for i in $(ls -1 $sysp); do
    if [ -e "${sysp}/${i}/cursors" ]; then
@@ -23,6 +24,7 @@ findcursors() {
 }
 
 setupcursor() {
+ local i
  for i in $(findcursors); do
    if [ $1 = $i ]; then
       echo "Xcursor.theme: $i"|xrdb -merge
@@ -33,6 +35,7 @@ setupcursor() {
 }
 
 listcursors() {
+ local i
  for i in $(findcursors); do
     echo $i
  done
@@ -51,8 +54,8 @@ showusage() {
 
 rescursor() {
  if [ -e "$prefs" ]; then
-    name=$(cat "$prefs"|cut -f 1 -d ":")
-    size=$(cat "$prefs"|grep ":"|cut -f 2 -d ":")
+    local name=$(cat "$prefs"|cut -f 1 -d ":")
+    local size=$(cat "$prefs"|grep ":"|cut -f 2 -d ":")
     if [ -z $size ]; then
        setupcursor $name
     else
