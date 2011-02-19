@@ -148,12 +148,15 @@ class Todivx:
             elif "mb" in x:
                size = x
          time = lspl[1] if not "f" in lspl[1] else lspl[0].split(':')[1]
+         xt = int(int(time.split('.')[0])/10)
+         th = int(xt / 3600) ; tm = int((xt - (th*3600))/60) ; ts = xt - (th*3600) - (tm*60)
+         time = "%02d:%02d:%02d" % (th,tm,ts)
          perc = min(perc,100)
          prsize = min(prsize,50)
          y = ""
          for x in range(1,int(prsize*perc/100)+1): y += '#'
          fmt = '%%%02ds' % -prsize
-         fmt = '[ %s / %s : %s ] [ %03d%% : ' + fmt + ' : %s ]  \r'
+         fmt = '[ %s -> %s : %s ] [ %03d%% : ' + fmt + ' : %s ]  \r'
          print(fmt % (time,rtime,fps,perc,y,size),end="")
 
    def dojob(self):
@@ -181,6 +184,7 @@ class Todivx:
                         line = ""
                      else:
                         line += chr
+                  print()
                pr.wait()
             except KeyboardInterrupt:
                print(self.getmsg23("break"))
