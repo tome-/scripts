@@ -1,8 +1,9 @@
 #!/bin/bash
-# Name:    exit-wm
-# About:   simple "logout" gui for wms
-# Author:  grimi <grimi at poczta dot fm>
-# License: GNU GPL v3
+# Name:     exit-wm
+# About:    simple "logout" gui for wms
+# Author:   grimi <grimi at poczta dot fm>
+# License:  GNU GPL v3
+# Required: consolekit+dbus or sudo,zenity or xterm+dialog
 
 
 case ${LANG%.*} in
@@ -86,6 +87,22 @@ killwm() {
   esac
 }
 
+haltsys() {
+   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
+         /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || \
+   sudo shutdown -h now
+   killwm $WM
+}
+
+
+rebootsys() {
+   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
+         /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || \
+   sudo shutdown -r now
+   killwm $WM
+}
+
+
 if [ ! -z "$zenity" ]; then
    optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
 else
@@ -101,10 +118,10 @@ case "$optio" in
     killwm $WM
   ;;
   "$REST")
-    sleep 0.5 && sudo shutdown -r now && killwm
+    sleep 0.5 && rebootsys
     ;;
   "$HALT")
-    sleep 0.5 && sudo shutdown -h now && killwm
+    sleep 0.5 && haltsys
   ;;
 esac
 
