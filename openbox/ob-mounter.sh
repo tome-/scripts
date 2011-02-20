@@ -14,7 +14,7 @@ set -o nounset
 
 
 # --- some configs -----------------------------------------
-FILEMANS=(pcmanfm-mod "xterm -e mc","midnight commander")
+FILEMANS=(pcmanfm "xterm -e mc","midnight commander")
 UDISKS=$(type -p udisks)
 NOTIFY=$(type -p notify-send)
 MOUNTPART=1
@@ -81,7 +81,7 @@ ejecter() {
    # $1 = media , $2 = mtype
    local tab=(eject eject)
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      tab=("udisks --detach" "udisks --eject") 
+      tab=("udisks --detach" "udisks --eject")
    else
       if  [ -n "$UDISK" ]; then
          tab[$MTYPE_USB]="udisks --detach"
@@ -156,7 +156,7 @@ ejectitem() {
    # $1 = media , $2 = media type
    local cmd="$(ejecter "$1" $2)"
    if [ -n "$NOTIFY" ]; then
-      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$2]}\" \"$(fixlabel "$1"):  $EJECTEDMSG.\"'" 
+      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$2]}\" \"$(fixlabel "$1"):  $EJECTEDMSG.\"'"
    fi
    echo "  <item label=\"$EJECTMSG\">"
    echo "   <action name=\"execute\">"
@@ -250,7 +250,7 @@ mediamenu() {
          for media in "${MCDTAB[@]}"; do
             media2menu "$media" $MTYPE_CDROM
          done
-      fi 
+      fi
       if [ ${#CDTAB[@]} != 0 ]; then
          if [ ${#MCDTAB[@]} != 0 ]; then
             echo " <separator/>"
@@ -315,10 +315,10 @@ splitmedias() {
             $MTYPE_CDROM)
                CDTAB[${#CDTAB[@]}]="$media" ;;
             $MTYPE_PART)
-               PARTAB[${#PARTAB[@]}]="$media" ;; 
-         esac 
+               PARTAB[${#PARTAB[@]}]="$media" ;;
+         esac
       fi
-   done 
+   done
 }
 
 

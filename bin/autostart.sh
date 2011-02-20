@@ -7,14 +7,13 @@
 
 
 usage() {
-   echo "USAGE: [-t] <desktop name>"
-   echo "   -t:   test mode; show only which .desktop will be run"
+   echo "USAGE: [-r] <desktop name>"
+   echo "   -r:   run mode; default: show only what's to be executed"
    exit 1
 }
 
-
-if [ "$1" == "-t" ]; then
-   TEST=1 && shift
+if [ "$1" == "-r" ]; then
+   RUNMODE=1 && shift
 fi
 
 if [ "${1/-h/}" == "" ]; then
@@ -30,7 +29,7 @@ for app in /etc/xdg/autostart/*.desktop; do
    tab[${app##*/}]="$app"
 done
 for app in ~/.config/autostart/*.desktop; do
-   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break  
+   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break
    tab[${app##*/}]="$app"
 done
 
@@ -42,8 +41,9 @@ for app in ${tab[@]}; do
       fi
       if [ -n "$auto" ]; then
          cmd="$(grep -i 'exec=' "$app")"
-         if [ -n "$TEST" ]; then
-            echo -e "$app:\n\t ==> ${cmd:5}"
+         if [ -z "$RUNMODE" ]; then
+            (( nr++ ))
+            echo -e "$nr) $app:\n\t ==> ${cmd:5}"
          else
             ( sleep 0.1 && ${cmd:5} )&
          fi

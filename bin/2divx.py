@@ -41,7 +41,7 @@ class Todivx:
             "vol":"change volume (from -200dB to 60dB, default: 0dB)",
             "trell":"setup optimal quantization","xvid":"xvid mode","nskip":"no skip frame",
             "threads":"use threads from 1 to 8 (default: 1)",
-            "verb":"show normal output from mencoder",  
+            "verb":"show normal output from mencoder",
             "test":"put command line to stdout","erargs":"Required at least one arg. Maybe try -h option!",
             "break":"\n... breaking up, ctrl-c was used ..."}
 
@@ -55,7 +55,7 @@ class Todivx:
       from  optparse import OptionParser
       self.parser = OptionParser(usage=self.getmsg23("usage"))
       self.parser.add_option("-o","--output",type="string",default=None,help=self.getmsg23("out"))
-      self.parser.add_option("-v","--vbitr",type="int",default="900",help=self.getmsg23("video"))   
+      self.parser.add_option("-v","--vbitr",type="int",default="900",help=self.getmsg23("video"))
       self.parser.add_option("-a","--abitr",type="int",default="128",help=self.getmsg23("audio"))
       self.parser.add_option("-c","--crop",type="string",default=None,help=self.getmsg23("crop"))
       self.parser.add_option("-s","--scale",type="string",default=None,help=self.getmsg23("scale"))
@@ -126,7 +126,7 @@ class Todivx:
          vfilter += "framestep=1,filmdint=dint_thres=256,harddup,"
       if self.opts.noskip:
          extra += " -noskip"
-         if not self.opts.fps:  vfilter += "harddup," 
+         if not self.opts.fps:  vfilter += "harddup,"
       if len(self.args) > 1: extra += " -idx"
       vfilter = vfilter[:len(vfilter)-1] if vfilter != " -vf " else ""
       self.command="nice -n 3 mencoder -ni -oac " + audio+" -ovc lavc -lavcopts " + \
@@ -156,7 +156,7 @@ class Todivx:
          y = ""
          for x in range(1,int(prsize*perc/100)+1): y += '#'
          fmt = '%%%02ds' % -prsize
-         fmt = '[ %s -> %s : %s ] [ %03d%% : ' + fmt + ' : %s ]  \r'
+         fmt = '[ %s < %s : %s ] [ %03d%% : ' + fmt + ' : %s ]  \r'
          print(fmt % (time,rtime,fps,perc,y,size),end="")
 
    def dojob(self):
