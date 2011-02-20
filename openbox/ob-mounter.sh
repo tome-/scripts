@@ -72,7 +72,7 @@ mounter() {
 umounter() {
    # $1 = media
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      echo "udisks --unmount \"$1\""
+      echo "udisks --unmount \"$1\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
    else
       echo "pumount \"$1\""
    fi

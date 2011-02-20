@@ -1,18 +1,18 @@
-#!/bin/bash - 
+#!/bin/bash -
 #===============================================================================
 #
 #          FILE:  ob-scripts.sh
-# 
-#         USAGE:  ob-scripts.sh 
-# 
-#   DESCRIPTION:  openbox pipe menu generator, to edit openbox config 
-# 
+#
+#         USAGE:  ob-scripts.sh
+#
+#   DESCRIPTION:  openbox pipe menu generator, to edit openbox config
+#
 #       OPTIONS:  ---
 #  REQUIREMENTS:  some  editor
 #          BUGS:  ---
 #         NOTES:  ---
-#        AUTHOR:  grimi 
-#       COMPANY: 
+#        AUTHOR:  grimi
+#       COMPANY:
 #       CREATED:  01.02.2011 08:02:48 CET
 #      REVISION:  ---
 #===============================================================================
@@ -20,7 +20,7 @@
 set -o nounset                              # Treat unset variables as an error
 
 
-EDITOR="xterm -e vim"
+EDITOR="xterm -g 90x28 -e vim"
 
 
 
