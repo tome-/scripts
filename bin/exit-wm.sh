@@ -3,7 +3,8 @@
 # About:    simple "logout" gui for wms
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
-# Required: consolekit+dbus or sudo,zenity or xterm+dialog
+# Required: grep,zenity or xterm+dialog
+# Required: consolekit+dbus or sudo
 
 
 case ${LANG%.*} in
@@ -37,8 +38,7 @@ if [ -z "$zenity" ]; then
     dial="$(type -p dialog)"
     xtrm="$(type -p xterm)"
    if [ -z "$dial" ] || [ -z "$xtrm" ]; then
-      echo "$ERXD"
-      exit
+      echo "$ERXD" ; exit 1
    fi
 fi
 
@@ -47,8 +47,7 @@ fi
 findwm() {
   for x in openbox fluxbox awesome; do
     if [ ! -z "$(pidof $x)" ]; then
-       WM="$x"
-       break
+       WM="$x" ; break
     fi
   done
 }
@@ -57,15 +56,12 @@ findwm() {
 if [ -z "$1" ]; then
   findwm
   if [ -z "$WM" ]; then
-    echo "$USAG"
-    echo
+    echo -e "$USAG\n"
     exit
   fi
 elif [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-  echo "$USAG"
-  echo
-  echo "$USSD"
-  echo
+  echo -e "$USAG\n"
+  echo -e "$USSD\n"
   exit
 else
   WM="$1"
@@ -88,6 +84,7 @@ killwm() {
 }
 
 haltsys() {
+   sleep 0.5
    dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
          /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || \
    sudo shutdown -h now
@@ -96,6 +93,7 @@ haltsys() {
 
 
 rebootsys() {
+   sleep 0.5
    dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
          /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || \
    sudo shutdown -r now
@@ -103,7 +101,7 @@ rebootsys() {
 }
 
 
-if [ ! -z "$zenity" ]; then
+if [ -n "$zenity" ]; then
    optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
 else
    export MESG LOGO REST HALT dial
@@ -113,16 +111,11 @@ else
    rm -f /dev/shm/exit-wm.cmd
 fi
 
+
 case "$optio" in
-  "$LOGO")
-    killwm $WM
-  ;;
-  "$REST")
-    sleep 0.5 && rebootsys
-    ;;
-  "$HALT")
-    sleep 0.5 && haltsys
-  ;;
+  "$LOGO")  killwm $WM ;;
+  "$REST")  rebootsys ;;
+  "$HALT")  haltsys ;;
 esac
 
 

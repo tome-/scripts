@@ -109,8 +109,7 @@ fixlabel() {
    # $1 = media
    #local name="$(udevadm info --query=property --name="$1"|grep -w "LABEL=")"
    #echo ${name/*LABEL=/}
-   local name="${1##*/}"
-   echo -e "${name//\\x20/_}"
+   echo -e "${1##*/}"
 }
 ejectableusb() {
    # $1 = media usb
