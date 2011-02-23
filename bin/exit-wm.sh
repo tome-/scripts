@@ -35,11 +35,11 @@ esac
 
 zenity="$(type -p zenity)"
 if [ -z "$zenity" ]; then
-    dial="$(type -p dialog)"
-    xtrm="$(type -p xterm)"
-   if [ -z "$dial" ] || [ -z "$xtrm" ]; then
-      echo "$ERXD" ; exit 1
-   fi
+  dial="$(type -p dialog)"
+  xtrm="$(type -p xterm)"
+  if [ -z "$dial" ] || [ -z "$xtrm" ]; then
+    echo "$ERXD" ; exit 1
+  fi
 fi
 
 
@@ -84,36 +84,36 @@ killwm() {
 }
 
 haltsys() {
-   sleep 0.5
-   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-         /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || \
-   sudo shutdown -h now
-   killwm $WM
+  sleep 0.5
+  dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
+       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || \
+  sudo shutdown -h now
+  killwm
 }
 
 
 rebootsys() {
-   sleep 0.5
-   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-         /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || \
-   sudo shutdown -r now
-   killwm $WM
+  sleep 0.5
+  dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
+       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || \
+  sudo shutdown -r now
+  killwm
 }
 
 
 if [ -n "$zenity" ]; then
-   optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
+  optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
 else
-   export MESG LOGO REST HALT dial
-   $xtrm -T "$WM" -g 43x10 -e 'echo $($dial --no-shadow --stdout --menu "$MESG" 10 43 9 "$LOGO" "" "$REST" "" "$HALT" "") >/dev/shm/exit-wm.cmd'
-   cat /dev/shm/exit-wm.cmd
-   optio="$(cat /dev/shm/exit-wm.cmd)"
-   rm -f /dev/shm/exit-wm.cmd
+  export MESG LOGO REST HALT dial
+  $xtrm -T "$WM" -g 43x10 -e 'echo $($dial --no-shadow --stdout --menu "$MESG" 10 43 9 "$LOGO" "" "$REST" "" "$HALT" "") >/dev/shm/exit-wm.cmd'
+  cat /dev/shm/exit-wm.cmd
+  optio="$(cat /dev/shm/exit-wm.cmd)"
+  rm -f /dev/shm/exit-wm.cmd
 fi
 
 
 case "$optio" in
-  "$LOGO")  killwm $WM ;;
+  "$LOGO")  killwm ;;
   "$REST")  rebootsys ;;
   "$HALT")  haltsys ;;
 esac
