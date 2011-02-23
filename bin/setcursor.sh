@@ -8,19 +8,16 @@ prefs="$HOME/.cursor"
 store=0
 
 listcursors() {
- local sysp i
- sysp="/usr/share/icons"
- for i in $(ls -1 $sysp); do
-   if [ -e "${sysp}/${i}/cursors" ]; then
-      echo $i
-   fi
+ local i hdir="$(pwd)"
+ cd "/usr/share/icons"
+ for i in *; do
+   [ -f "$i/cursors/left_ptr" ] && echo "$i"
  done
- sysp="$HOME/.icons"
- for i in $(ls -1 $sysp); do
-   if [ -e "${sysp}/${i}/cursors" ]; then
-      echo $i
-   fi
+ cd "$HOME/.icons"
+ for i in *; do
+   [ -d "$i/cursors/left_ptr" ] && echo "$i"
  done
+ cd "$hdir"
 }
 
 setupcursor() {
@@ -35,7 +32,7 @@ setupcursor() {
 }
 
 showusage() {
-  echo "USAGE: $(basename "$0") [options] <cursor name> [cursor size]"
+  echo "USAGE: ${0##*/} [options] <cursor name> [cursor size]"
   echo "Options:"
   echo "        -h: for display this page"
   echo "        -l: list available cursors"
@@ -46,12 +43,12 @@ showusage() {
 
 rescursor() {
  if [ -e "$prefs" ]; then
-    local name=$(cat "$prefs"|cut -f 1 -d ":")
-    local size=$(cat "$prefs"|grep ":"|cut -f 2 -d ":")
-    if [ -z $size ]; then
-       setupcursor $name
+    local name size pref="$(cat "$prefs")"
+    name="${ref%:*}" ; size="${pref#*:}"
+    if [ "$name" = "$size" ]; then
+       setupcursor "$name"
     else
-       setupcursor $name $size
+       setupcursor "$name" "$size"
     fi
  fi
 }
@@ -76,10 +73,10 @@ done
 
 shift $((OPTIND-1)); OPTIND=1
 
-if [ $# = 1 ] || [ $# = 2 ]; then
-  setupcursor $1 $2
+if [ $# = 1 -o $# = 2 ] && [ -n "$1" ]; then
+  setupcursor "$1" "$2"
   if [ $store = 1 ]; then
-     if [ ! -z $2 ] && [ ! -z $(echo $2|grep "^[0-9]*$") ]; then
+     if [ -n "$2" ] && [ -z "${2//[0-9]/}" ]; then
         echo "$1:$2" > "$prefs"
      else
         echo "$1" > "$prefs"

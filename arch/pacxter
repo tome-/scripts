@@ -14,11 +14,11 @@ PACMAN="/usr/bin/pacman-color"
 [ -f "$PACMAN" ] || PACMAN="${PACMAN%-*}"
 XTERM="/usr/bin/xterm"
 SUDO="/usr/bin/sudo"
-NAME="${0/*\//}"
+NAME="${0##*/}"
 
 
 ## Lang messages ##
-case "${LANG/_*/}" in
+case "${LANG%_*}" in
   pl)
     MSG_PASSROOT="Podaj hasło roota: "
     MSG_PASS="Podaj hasło: "
