@@ -10,7 +10,7 @@
 # Note:     after adding to /etc/pmount.allow 4x: /dev/sda[1-9]
 
 set -o nounset
-
+shopt -s nullglob
 
 
 # --- some configs -----------------------------------------
@@ -168,7 +168,7 @@ mountpath() {
    local mnt="$(grep -w -e "$1" -e "$(readlink -f "$1")" /etc/mtab)"
    mnt="${mnt##*/}" ; mnt="${mnt%% *}"
    [ "$mnt" != "" ] && mnt="/media/$mnt"
-   echo "$mnt"
+   echo -e "$mnt"
 }
 ismountedsys() {
    # $1 = dev
@@ -217,7 +217,7 @@ media2menu() {
          if [ -n "$eusb" ]; then
             ejectitem "$eusb" $2
          fi
-      fi 
+      fi
    fi
    echo " </menu>"
 }
