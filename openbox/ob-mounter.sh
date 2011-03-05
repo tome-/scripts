@@ -13,8 +13,11 @@ set -o nounset
 shopt -s nullglob
 
 
+# file managers ... ----------------------------------------
+# ',' = set label  ; ':' = cd to mount point
+FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
+
 # --- some configs -----------------------------------------
-FILEMANS=(pcmanfm "xterm -e mc","midnight commander")
 UDISKS=$(type -p udisks)
 NOTIFY=$(type -p notify-send)
 MOUNTPART=1
@@ -181,7 +184,7 @@ ismountedsys() {
 }
 media2menu() {
    # $1 = media , $2 = mediatype
-   local cmd fmn fm x=0 eusb title
+   local cmd fmn fm x=0 eusb title cdir
    local l=${#FILEMANS[@]}
    local lab="$(fixlabel "$1")"
    [ "${lab/__/}" ==  "$lab" ] && title="${lab//_/__}" || title="$lab"
@@ -189,15 +192,27 @@ media2menu() {
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
    echo "  <separator label=\"${MTYPETAB[$2]}: $lab\"/>"
    while [[ $x < $l ]]; do
-      fm="${FILEMANS[$x]}" ; fmn="$fm"
+      cdir=0 ; fm="${FILEMANS[$x]}" ; fmn="$fm"
       if [ "${fm}" != "${fm/*,/}" ]; then
          fmn="${fm/*,/}" ; fm="${fm/,*/}"
       fi
+      if [ "${fm:0:1}" == ":" ]; then
+         fm="${fm:1}" ; fmn="${fmn:1}" ; cdir=1
+      fi
       echo "  <item label=\"$OPWITHMSG $fmn\">"
       if [ -z "$mntpath" ]; then
-         cmd="sh -c '$(mounter "$1") &amp;&amp; $fm \"/media/$lab\"'"
+         cmd="sh -c '$(mounter "$1") &amp;&amp; "
+         if [ $cdir == 1 ]; then
+            cmd+="cd \"/media/$lab\" &amp;&amp; exec $fm'"
+         else
+            cmd+="exec $fm \"/media/$lab\"'"
+         fi
       else
-         cmd="$fm \"$mntpath\""
+         if [ $cdir == 1 ]; then
+            cmd="sh -c 'cd \"/media/$lab\" &amp;&amp; exec $fm'"
+         else
+            cmd="$fm \"$mntpath\""
+         fi
       fi
       echo "   <action name=\"execute\">"
       echo "    <execute>$cmd</execute>"

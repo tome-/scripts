@@ -63,7 +63,7 @@ fi
 source /etc/makepkg.conf
 [ -f ~/.makepkg.conf ] && source ~/.makepkg.conf
 
-cd "${1%/*}"
+[ "${1%/*}" != "$1" ] && cd "${1%/*}"
 
 source PKGBUILD
 
