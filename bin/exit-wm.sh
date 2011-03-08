@@ -3,7 +3,7 @@
 # About:    simple "logout" gui for wms
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
-# Required: grep,zenity or xterm+dialog
+# Required: grep,ps,zenity or xterm+dialog
 # Required: consolekit+dbus or sudo
 
 
@@ -69,6 +69,7 @@ fi
 
 
 killwm() {
+  local app
   case $WM in
     openbox) openbox --exit;;
     fluxbox)
@@ -81,6 +82,7 @@ killwm() {
     awesome) echo "awesome.quit()"|awesome-client;;
     *) kill -KILL &>/dev/null `pidof $WM`;;
   esac
+  for app in $(ps -u $USER -o pid=); do kill -9 $app; done
 }
 
 haltsys() {
