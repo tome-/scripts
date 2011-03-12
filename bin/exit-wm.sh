@@ -3,7 +3,8 @@
 # About:    simple "logout" gui for wms
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
-# Required: grep,ps,zenity or xterm+dialog
+# Required: grep,procps(pkill)
+# Required: zenity or xterm+dialog
 # Required: consolekit+dbus or sudo
 
 
@@ -82,14 +83,17 @@ killwm() {
     awesome) echo "awesome.quit()"|awesome-client;;
     *) kill -KILL &>/dev/null `pidof $WM`;;
   esac
-  for app in $(ps -u $USER -o pid=); do kill -9 $app; done
+  pkill -SIGKILL -u $USER
 }
 
 haltsys() {
   sleep 0.5
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || \
-  sudo shutdown -h now
+       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || {
+    if [ "$(sudo -l shutdown -h now)" != "" ]; then
+      sudo shutdown -h now
+    fi
+  }
   killwm
 }
 
@@ -97,8 +101,11 @@ haltsys() {
 rebootsys() {
   sleep 0.5
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || \
-  sudo shutdown -r now
+       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || {
+    if [ "$(sudo -l shutdown -r now)" != "" ]; then
+      sudo shutdown -r now
+    fi
+  }
   killwm
 }
 
