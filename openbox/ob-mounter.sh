@@ -116,7 +116,7 @@ fixlabel() {
    else
       tab=(${info/*UUID_ENC=/})
    fi
-   echo ${tab[0]}
+   echo -e ${tab[0]}
 }
 ejectableusb() {
    # $1 = media usb
