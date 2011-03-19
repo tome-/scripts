@@ -110,13 +110,17 @@ ismounted() {
 }
 fixlabel() {
    # $1 = media
-   #local name="$(udevadm info --query=property --name="$1"|grep -w "LABEL=")"
-   #echo ${name/*LABEL=/}
-   echo -e "${1##*/}"
+   local info="$(udevadm info --query=property --name="$1")" tab=()
+   if [ "${info/LABEL=/}" != "$info" ]; then
+      tab=(${info/*LABEL_ENC=/})
+   else
+      tab=(${info/*UUID_ENC=/})
+   fi
+   echo ${tab[0]}
 }
 ejectableusb() {
    # $1 = media usb
-   local ejdev ejdevp ejdevm medi noeject=
+   local ejdev ejdevp ejdevm medi noeject=0
    ejdevp="$(readlink -f "$1")" ; ejdev="${ejdevp/[1-9]/}"
    if [ "$ejdev" != "$ejdevp" ]; then
       if [ ${#MUSBTAB[@]} != 0 ]; then
@@ -127,12 +131,8 @@ ejectableusb() {
             fi
          done
       fi
-   else
-      ejdev="$media"
    fi
-   if [ -z "$noeject" ]; then
-      echo "$ejdev"
-   fi
+   return $noeject
 }
 mountitem() {
    # $1 = media
@@ -156,7 +156,11 @@ umountitem() {
 }
 ejectitem() {
    # $1 = media , $2 = media type
-   local cmd="$(ejecter "$1" $2)"
+   local medi="$1" cmd
+   if [ $2 == $MTYPE_USB ]; then
+      medi="$(readlink -f "$1")" ; medi="${medi/[1-9]/}"
+   fi
+   cmd="$(ejecter "$medi" $2)"
    if [ -n "$NOTIFY" ]; then
       cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$2]}\" \"$(fixlabel "$1"):  $EJECTEDMSG.\"'"
    fi
@@ -184,7 +188,7 @@ ismountedsys() {
 }
 media2menu() {
    # $1 = media , $2 = mediatype
-   local cmd fmn fm x=0 eusb title cdir
+   local cmd fmn fm x=0 title cdir
    local l=${#FILEMANS[@]}
    local lab="$(fixlabel "$1")"
    [ "${lab/__/}" ==  "$lab" ] && title="${lab//_/__}" || title="$lab"
@@ -226,11 +230,10 @@ media2menu() {
    else
       mountitem "$1"
       if [ $2 == $MTYPE_CDROM ]; then
-         ejectitem "$media" $2
+         ejectitem "$1" $2
       elif [ $2 == $MTYPE_USB ]; then
-         eusb="$(ejectableusb "$media")"
-         if [ -n "$eusb" ]; then
-            ejectitem "$eusb" $2
+         if ( ejectableusb "$1" ); then
+            ejectitem "$1" $2
          fi
       fi
    fi
