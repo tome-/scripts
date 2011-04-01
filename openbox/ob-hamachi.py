@@ -50,9 +50,11 @@ class hamachi():
          self.out += ' <menu id="ham-%s" label="%s">\n' % (sbn[0],nname)
          while line != "":
             line = gNext()
-            if line.find("[") >= 0: break
+            if line.find("[") >= 0:
+               self.linets.insert(0,line.encode())
+               break
             if line != "":
-               sbt = line.split() ; online = clname = '' 
+               sbt = line.split() ; online = clname = ''
                if sbt[0] == "*" or sbt[0] == "x":
                   online = sbt[0]+' '
                   sbt.remove(sbt[0])

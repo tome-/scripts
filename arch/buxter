@@ -17,6 +17,7 @@ case ${LANG%_*} in
       MSG_US="SKŁADNIA"
       MSG_TR="uruchom w xterm"
       MSG_DG="nie wykonuj, pokaż linie komend"
+      MSG_SH="buduj w /dev/shm"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie (t/N) ? "
       ANS_EX="t"
       MSG_CC="Budować z ccache (T/n) ? "
@@ -28,6 +29,7 @@ case ${LANG%_*} in
       MSG_US="USAGE"
       MSG_TR="exec in xterm"
       MSG_DG="don't exec, show cmd line"
+      MSG_SH="build in /dev/shm"
       MSG_EX="Package already exists. Build again (y/N) ? "
       ANS_EX="y"
       MSG_CC="Build with ccache (Y/n) ? "
@@ -40,17 +42,22 @@ esac
 
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-t] [-d] ${BLDRED}<PKGBULD>${TXTRES}"
-   echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}" 
-   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}" 
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}<PKGBULD>${TXTRES}"
+   echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
+   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
+   echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
    exit 1
 }
 
-([ "$1" == "-h" ] || [ "$1" == "--help" ]) && usage
 
-[ "$1" == "-t" ] && TERMODE=1 && shift
+case "$1" in
+   "-t")          TERMODE=1 && shift ;;
+   "-s")          BUILDSHM=1 && shift ;;
+   "-ts"|"-st")   TERMODE=1 && BUILDSHM=1 && shift ;;
+   "-d")          DEBUGMODE=1 && shift ;;
+   *) usage ;;
+esac
 
-[ "$1" == "-d" ] && DEBUGMODE=1 && shift
 
 if [ ! -f PKGBUILD ]; then
    if [ -z "$1" ]; then
@@ -70,6 +77,16 @@ source PKGBUILD
 [ "${arch[0]}" = "any" ] && archpkg="any" || archpkg="$CARCH"
 
 pkgdef="package='${pkgname[0]}-${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
+
+
+if [ -n "$BUILDSHM" ]; then
+   [ -d src ] && rm -fr src
+   BUILDSHM="/dev/shm/${pkgname[0]}-${NAME}-src"
+   [ -d "$BUILDSHM" ] && rm -fr "$BUILDSHM"
+   mkdir -p "$BUILDSHM"
+   ln -s "$BUILDSHM" src
+fi
+
 
 if [ "${archpkg}" == "x86_64" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
@@ -102,5 +119,8 @@ elif [ -z "$TERMODE" ]; then
 else
    xterm -fg gray -bg black -T "::: $NAME :::" -e "$cmd ; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
 fi
+
+
+[ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
 
 
