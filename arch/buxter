@@ -42,7 +42,7 @@ esac
 
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}<PKGBULD>${TXTRES}"
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}<PKGBUILD>${TXTRES}"
    echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
    echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
    echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
@@ -55,7 +55,7 @@ case "$1" in
    "-s")          BUILDSHM=1 && shift ;;
    "-ts"|"-st")   TERMODE=1 && BUILDSHM=1 && shift ;;
    "-d")          DEBUGMODE=1 && shift ;;
-   *) usage ;;
+   "-h"|"--help") usage ;;
 esac
 
 
