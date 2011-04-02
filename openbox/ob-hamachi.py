@@ -45,6 +45,7 @@ class hamachi():
             nname = sbn[0] + ' '
             sbn.remove(sbn[0])
          nname += sbn[0]
+         netid = sbn[0].split('[')[1].split(']')[0]
          if self.nets: self.out += ' <separator/>\n'
          self.nets += 1
          self.out += ' <menu id="ham-%s" label="%s">\n' % (sbn[0],nname)
@@ -65,11 +66,17 @@ class hamachi():
                clip = sbt[1]
                self.out += '  <menu id="%s-menu" label="%s%s%s">\n' % (clip,online,clip,clname)
                self.out += '   <separator label="ID: %s"/>\n' % clid
-               if online != "":
-                  self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
-                  self.out += '  <separator/>\n'
                self.genActionItem('Ping','xterm -e "ping -w 10 -c 10 %s"' % clip,'  ')
+               if online != "":
+                  self.out += '  <separator/>\n'
+                  self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
                self.out += '  </menu>\n'
+         if nname[0] == "*":
+            self.out += '  <separator/>\n'
+            self.genActionItem('Offline','hamachi go-offline %s' % netid,' ')
+         else:
+            self.out += '  <separator/>\n'
+            self.genActionItem('Online','hamachi go-online %s' % netid,' ')
          self.out += ' </menu>\n'
       return self.nets
 
