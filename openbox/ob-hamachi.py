@@ -67,7 +67,7 @@ class hamachi():
                self.out += '  <menu id="%s-menu" label="%s%s%s">\n' % (clip,online,clip,clname)
                self.out += '   <separator label="ID: %s"/>\n' % clid
                self.genActionItem('Ping','xterm -e "ping -w 10 -c 10 %s"' % clip,'  ')
-               if online != "":
+               if online != "" and online[0] != "x":
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
                self.out += '  </menu>\n'
