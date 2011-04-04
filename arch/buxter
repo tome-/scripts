@@ -88,7 +88,7 @@ if [ -n "$BUILDSHM" ]; then
 fi
 
 
-if [ "${archpkg}" == "x86_64" ]; then
+if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
       pkgdef="${pkgdef} ; echo ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32}${TXTRES}' ; \
          read res32 ; [ \"\$res32\" == '$ANS_32' ] && bit32='linux32 ' && \
