@@ -72,7 +72,7 @@ class hamachi():
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
                self.out += '  </menu>\n'
-         if netstat[0] == "*":
+         if len(netstat) > 0 and netstat[0] == "*":
             self.out += '  <separator/>\n'
             self.genActionItem('Offline','hamachi go-offline %s' % netname,' ')
          else:
