@@ -18,74 +18,75 @@ class hamachi():
    def __init__(self):
       self.out = '<?xml version="1.0" encoding="UTF-8"?>\n'
       self.out += '<openbox_pipe_menu>\n'
-      self.nets = 0
-      self.linets = []
+      self.numnets = 0
+      self.linetabs = []
 
    def genEnd(self,stat):
       if stat == "offline":
          self.genActionItem('Login','hamachi login')
       else:
-         if self.nets:
+         if self.numnets:
             self.out += ' <separator/>\n'
          self.genActionItem('Logout','hamachi logout')
       self.out += '</openbox_pipe_menu>\n'
 
    def genNet(self):
       def gNext():
-         if len(self.linets) != 0:
-            line = self.linets[0]
-            self.linets.remove(line)
+         if len(self.linetabs) != 0:
+            line = self.linetabs[0]
+            self.linetabs.remove(line)
             return line.decode()
          else:
             return ''
-      while len(self.linets):
+      while len(self.linetabs):
          line = gNext()
-         sbn = line.split() ; nname = ''
-         if sbn[0] == "*" or sbn[0] == "x":
-            nname = sbn[0] + ' '
-            sbn.remove(sbn[0])
-         nname += sbn[0]
-         netid = sbn[0].split('[')[1].split(']')[0]
-         if self.nets: self.out += ' <separator/>\n'
-         self.nets += 1
-         self.out += ' <menu id="ham-%s" label="%s">\n' % (sbn[0],nname)
+         nettab = line.split() ; netname = netstat = ''
+         if nettab[0] == "*" or nettab[0] == "x":
+            netstat = nettab[0] + ' '
+            nettab.remove(nettab[0])
+         netname = nettab[0].split('[')[1].split(']')[0]
+         if self.numnets: self.out += ' <separator/>\n'
+         self.numnets += 1
+         self.out += ' <menu id="ham-%s" label="%s%s">\n' % (nettab[0],netstat,netname)
+         self.out += '  <separator label="%s"/>' % (netname)
          while line != "":
             line = gNext()
             if line.find("[") >= 0:
-               self.linets.insert(0,line.encode())
+               self.linetabs.insert(0,line.encode())
                break
             if line != "":
-               sbt = line.split() ; online = clname = ''
-               if sbt[0] == "*" or sbt[0] == "x":
-                  online = sbt[0]+' '
-                  sbt.remove(sbt[0])
-               clid = sbt[0]
-               if sbt[1].isalpha():
-                  clname = " [%s]" % sbt[1]
-                  sbt.remove(sbt[1])
-               clip = sbt[1]
-               self.out += '  <menu id="%s-menu" label="%s%s%s">\n' % (clip,online,clip,clname)
+               cltab = line.split() ; clstat = clname = ''
+               if cltab[0] == "*" or cltab[0] == "x":
+                  clstat = cltab[0]+' '
+                  cltab.remove(cltab[0])
+               clid = cltab[0]
+               if cltab[1].isalpha():
+                  clname = "%s : " % cltab[1]
+                  cltab.remove(cltab[1])
+               clip = cltab[1]
+               self.out += '  <menu id="%s-menu" label="%s%s%s">\n' % (clip,clstat,clname,clip)
+               self.out += '   <separator label="%s%s"/>\n' % (clname,clip)
                self.out += '   <separator label="ID: %s"/>\n' % clid
                self.genActionItem('Ping','xterm -e "ping -w 10 -c 10 %s"' % clip,'  ')
-               if online != "" and online[0] != "x":
+               if clstat != "" and clstat[0] != "x":
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
                self.out += '  </menu>\n'
-         if nname[0] == "*":
+         if netstat[0] == "*":
             self.out += '  <separator/>\n'
-            self.genActionItem('Offline','hamachi go-offline %s' % netid,' ')
+            self.genActionItem('Offline','hamachi go-offline %s' % netname,' ')
          else:
             self.out += '  <separator/>\n'
-            self.genActionItem('Online','hamachi go-online %s' % netid,' ')
+            self.genActionItem('Online','hamachi go-online %s' % netname,' ')
          self.out += ' </menu>\n'
-      return self.nets
+      return self.numnets
 
-   def genActionItem(self,name,cmd,spc=''):
-      self.out += spc + ' <item label="%s">\n' % name
-      self.out += spc + '  <action name="Execute">\n'
-      self.out += spc + '   <execute>%s</execute>\n' % cmd
-      self.out += spc + '  </action>\n'
-      self.out += spc + ' </item>\n'
+   def genActionItem(self,name,cmd,space=''):
+      self.out += space + ' <item label="%s">\n' % name
+      self.out += space + '  <action name="Execute">\n'
+      self.out += space + '   <execute>%s</execute>\n' % cmd
+      self.out += space + '  </action>\n'
+      self.out += space + ' </item>\n'
 
    def genStatus(self):
       result = None
@@ -98,13 +99,13 @@ class hamachi():
          pr.stdout.close()
          adr = nick = clid = ''
          for i in range(len(lines)):
-            spl = lines[i].decode().split()
-            if len(spl):
-               if spl[0] == "address": adr = spl[2]
-               if spl[0] == "nickname": nick = spl[2]
-               if spl[0] == "client": clid = spl[3]
-               if spl[0] == "status": result = spl[2]
-         self.out += ' <separator label="%s%s"/>\n' % (adr,'' if nick == '' else ' ['+nick+']')
+            infotab = lines[i].decode().split()
+            if len(infotab):
+               if infotab[0] == "address":  adr    = infotab[2]
+               if infotab[0] == "nickname": nick   = infotab[2]
+               if infotab[0] == "client":   clid   = infotab[3]
+               if infotab[0] == "status":   result = infotab[2]
+         self.out += ' <separator label="%s : %s"/>\n' % (nick,adr)
          self.out += ' <separator label="ID: %s"/>\n' % clid
       except OSError:
          self.out += ' <item label="Hamachi not installed ?!"/>\n'
@@ -117,15 +118,15 @@ class hamachi():
          if not stat or stat != "logged": raise()
          pr = sp.Popen(['hamachi','list'],stdout=sp.PIPE,stderr=sp.STDOUT)
          try:
-            self.linets = pr.stdout.readlines()
+            self.linetabs = pr.stdout.readlines()
             pr.kill()
          except:
             pass
          pr.stdout.close()
       except:
          pass
-      if len(self.linets):
-         if len(self.linets[0].split()) == 0:
+      if len(self.linetabs):
+         if len(self.linetabs[0].split()) == 0:
             self.out += ' <item label="Can\'t get info from hamachi!"/>\n'
          else:
             self.genNet()
