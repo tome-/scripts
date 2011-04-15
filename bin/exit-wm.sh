@@ -4,7 +4,7 @@
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
 # Required: grep,procps(pkill)
-# Required: zenity or xterm+dialog
+# Required: zenity or Xdialog or xterm+dialog
 # Required: consolekit+dbus or sudo
 
 
@@ -36,6 +36,9 @@ esac
 
 zenity="$(type -p zenity)"
 if [ -z "$zenity" ]; then
+   xdial="$(type -p Xdialog)"
+fi
+if [ -z "$xdial" ]; then
   dial="$(type -p dialog)"
   xtrm="$(type -p xterm)"
   if [ -z "$dial" ] || [ -z "$xtrm" ]; then
@@ -112,6 +115,8 @@ rebootsys() {
 
 if [ -n "$zenity" ]; then
   optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
+elif [ -n "$xdial" ]; then
+  optio="$($xdial --stdout --title "$WM" --radiolist "$MESG" 13 43 9  "$LOGO" "" TRUE "$REST" "" FALSE "$HALT" "" FALSE)"
 else
   export MESG LOGO REST HALT dial
   $xtrm -T "$WM" -g 43x10 -e 'echo $($dial --no-shadow --stdout --menu "$MESG" 10 43 9 "$LOGO" "" "$REST" "" "$HALT" "") >/dev/shm/exit-wm.cmd'
