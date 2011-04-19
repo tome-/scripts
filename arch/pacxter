@@ -52,7 +52,7 @@ if [ -z "$1" ]; then
    CMD+="echo -e '$MSG_USAGE'"
 elif [ "$USER" = "root" ]; then
    CMD+="$PACMAN 2>&1 -U '$1'"
-elif [ "$($SUDO 2>/dev/null -l $PACMAN -U)" = "$PACMAN -U" ]; then
+elif [ "$($SUDO 2>/dev/null -n -l $PACMAN -U)" = "$PACMAN -U" ]; then
    CMD+="$SUDO -p '$MSG_PASS' $PACMAN 2>&1 -U '$1'"
 else
    CMD+="echo -n '$MSG_PASSROOT' ; /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'"

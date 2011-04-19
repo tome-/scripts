@@ -12,7 +12,7 @@ case ${LANG%.*} in
   "pl_PL")
     USAG="Składnia: <nazwa menadżera okien>"
     USSD="  > Nie zapomnij dodać komendy shutdown do /etc/sudoers <"
-    ERXD=">>> Uwaga: zainstaluj aplikacje Zenity, lub dialog+xterm. <<<"
+    ERXD=">>> Uwaga: zainstaluj zenity albo xdialog albo dialog+xterm. <<<"
     MESG="Wybierz właściwą opcję:"
     MOPT="Opcja"
     MSEL="Wybór"
@@ -23,7 +23,7 @@ case ${LANG%.*} in
   *)
     USAG="Usage: <wm name>"
     USSD="  > Don't forget add shutdown command to /etc/sudoers <"
-    ERXD=">>> Warning: install Zenity or dialog+xterm. <<<"
+    ERXD=">>> Warning: install zenity or xdialog or dialog+xterm. <<<"
     MESG="Select right option:"
     MOPT="Option"
     MSEL="Select"
