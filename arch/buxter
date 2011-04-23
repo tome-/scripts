@@ -122,5 +122,6 @@ fi
 
 
 [ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
+[ -h src ] && rm -f src
 
 
