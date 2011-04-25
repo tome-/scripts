@@ -24,7 +24,7 @@ class hamachi():
    def genEnd(self,stat):
       if stat == "offline":
          self.genActionItem('Login','hamachi login')
-      else:
+      elif stat != "norunned":
          if self.numnets:
             self.out += ' <separator/>\n'
          self.genActionItem('Logout','hamachi logout')
@@ -67,7 +67,8 @@ class hamachi():
                self.out += '  <menu id="%s-menu" label="%s%s%s">\n' % (clip,clstat,clname,clip)
                self.out += '   <separator label="%s%s"/>\n' % (clname,clip)
                self.out += '   <separator label="ID: %s"/>\n' % clid
-               self.genActionItem('Ping','xterm -g 60x14 -e "ping -w 10 -c 10 %s"' % clip,'  ')
+               self.genActionItem('Ping','xterm -T "Pinging: %s" -g 60x18 -e "ping -w 10 -c 10 %s;echo -en \'\\n:::Hit ENTER:::\';read"' \
+                     % (clname.split()[0],clip),'  ')
                if clstat != "" and clstat[0] != "x":
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
@@ -97,6 +98,9 @@ class hamachi():
             pr.kill()
          except: pass
          pr.stdout.close()
+         if 'logmein-hamachi start' in lines[1].decode():
+            self.out += ' <item label="Hamachi does not running ?!"/>\n'
+            return 'norunned'
          adr = nick = clid = ''
          for i in range(len(lines)):
             infotab = lines[i].decode().split()
@@ -108,7 +112,7 @@ class hamachi():
          self.out += ' <separator label="%s : %s"/>\n' % (nick,adr)
          self.out += ' <separator label="ID: %s"/>\n' % clid
       except OSError:
-         self.out += ' <item label="Hamachi not installed ?!"/>\n'
+         self.out += ' <item label="Hamachi does not installed ?!"/>\n'
       return result
 
    def doJob(self):

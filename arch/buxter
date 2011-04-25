@@ -109,7 +109,7 @@ if [ "$archpkg" != "any" ]; then
             anscc="${ANS_TB[$ANNOP]}"
             MSG_CC="${MSG_CC}${MSG_Yn}"
          else
-            ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1' 
+            ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1'
             anscc="${ANS_TB[$ANYES]}"
             MSG_CC="${MSG_CC}${MSG_yN}"
          fi
