@@ -10,7 +10,8 @@ BLDYEL='\e[1;33m'
 TXTRES='\e[0m'
 
 NAME="${0##*/}"
-
+ANYES=0
+ANNOP=1
 
 case ${LANG%_*} in
    pl)
@@ -20,10 +21,12 @@ case ${LANG%_*} in
       MSG_SH="buduj w /dev/shm"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie (t/N) ? "
       ANS_EX="t"
-      MSG_CC="Budować z ccache (T/n) ? "
-      ANS_CC="n"
       MSG_32="Budować pakiet 32 bitowy (t/N) ? "
       ANS_32="t"
+      MSG_CC="Budować z ccache "
+      ANS_TB=(t n)
+      MSG_Yn="(T/n) ? "
+      MSG_yN="(t/N) ? "
    ;;
    *)
       MSG_US="USAGE"
@@ -32,10 +35,12 @@ case ${LANG%_*} in
       MSG_SH="build in /dev/shm"
       MSG_EX="Package already exists. Build again (y/N) ? "
       ANS_EX="y"
-      MSG_CC="Build with ccache (Y/n) ? "
-      ANS_CC="n"
       MSG_32="Build 32 bit package (y/N) ? "
       ANS_32="y"
+      MSG_CC="Build with ccache "
+      ANS_TB=(y n)
+      MSG_Yn="(Y/n) ? "
+      MSG_yN="(y/N) ? "
    ;;
 esac
 
@@ -99,9 +104,17 @@ fi
 if [ "$archpkg" != "any" ]; then
    for x in ${BUILDENV[@]}; do
       if [ "$x" == "ccache" ]; then
+         if [ -z "$CCACHE_DISABLE" ]; then
+            ccvar='&& export CCACHE_DISABLE=1 || unset CCACHE_DISABLE'
+            anscc="${ANS_TB[$ANNOP]}"
+            MSG_CC="${MSG_CC}${MSG_Yn}"
+         else
+            ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1' 
+            anscc="${ANS_TB[$ANYES]}"
+            MSG_CC="${MSG_CC}${MSG_yN}"
+         fi
          cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC}${TXTRES}' ; \
-            read cres ; [ \"\$cres\" == '$ANS_CC' ] \
-            && export CCACHE_DISABLE=1 || unset CCACHE_DISABLE ; "
+               read cres ; [ \"\$cres\" == '$anscc' ] $ccvar ; "
          break
       fi
    done
@@ -113,7 +126,7 @@ cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo ; echo -e \"${BLDRED}==> $
 
 
 if [ -n "$DEBUGMODE" ]; then
-   echo "$cmd"
+   echo -e "$cmd"
 elif [ -z "$TERMODE" ]; then
    eval "$cmd"
 else
