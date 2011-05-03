@@ -4,13 +4,12 @@
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
 # Required: grep,procps(pkill)
-# Required: zenity or Xdialog or xterm+dialog
+# Required: zenity or Xdialog or xterm+dialog+cat
 # Required: consolekit+dbus or sudo
 
 
 case ${LANG%.*} in
   "pl_PL")
-    USAG="Składnia: <nazwa menadżera okien>"
     USSD="  > Nie zapomnij dodać komendy shutdown do /etc/sudoers <"
     ERXD=">>> Uwaga: zainstaluj zenity albo xdialog albo dialog+xterm. <<<"
     MESG="Wybierz właściwą opcję:"
@@ -21,7 +20,6 @@ case ${LANG%.*} in
     HALT="Wyłącz"
   ;;
   *)
-    USAG="Usage: <wm name>"
     USSD="  > Don't forget add shutdown command to /etc/sudoers <"
     ERXD=">>> Warning: install zenity or xdialog or dialog+xterm. <<<"
     MESG="Select right option:"
@@ -34,66 +32,31 @@ case ${LANG%.*} in
 esac
 
 
-zenity="$(type -p zenity)"
-if [ -z "$zenity" ]; then
-   xdial="$(type -p Xdialog)"
+NAME="${0##*/}"
+
+ZENITY="$(type -p zenity)"
+if [ -z "$ZENITY" ]; then
+   XDIALOG="$(type -p Xdialog)"
 fi
-if [ -z "$xdial" ]; then
-  dial="$(type -p dialog)"
-  xtrm="$(type -p xterm)"
-  if [ -z "$dial" ] || [ -z "$xtrm" ]; then
+if [ -z "$XDIALOG" ]; then
+  DIALOG="$(type -p dialog)"
+  XTERM="$(type -p xterm)"
+  if [ -z "$DIALOG" ] || [ -z "$XTERM" ]; then
     echo "$ERXD" ; exit 1
   fi
 fi
 
 
-
-findwm() {
-  for x in openbox fluxbox awesome; do
-    if [ ! -z "$(pidof $x)" ]; then
-       WM="$x" ; break
-    fi
-  done
-}
-
-
-if [ -z "$1" ]; then
-  findwm
-  if [ -z "$WM" ]; then
-    echo -e "$USAG\n"
-    exit
-  fi
-elif [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-  echo -e "$USAG\n"
-  echo -e "$USSD\n"
-  exit
-else
-  WM="$1"
-fi
-
-
 killwm() {
-  local app
-  case $WM in
-    openbox) openbox --exit;;
-    fluxbox)
-      if grep -i allowremoteactions ~/.fluxbox/init|grep -q true; then
-        fluxbox-remote exit
-      else
-        kill -KILL &>/dev/null `pidof fluxbox`
-      fi
-    ;;
-    awesome) echo "awesome.quit()"|awesome-client;;
-    *) kill -KILL &>/dev/null `pidof $WM`;;
-  esac
   pkill -SIGKILL -u $USER
 }
+
 
 haltsys() {
   sleep 0.5
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || {
-    if [ "$(sudo -l shutdown -h now)" != "" ]; then
+    if [ "$(sudo -n -l shutdown -h now)" != "" ]; then
       sudo shutdown -h now
     fi
   }
@@ -105,7 +68,7 @@ rebootsys() {
   sleep 0.5
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || {
-    if [ "$(sudo -l shutdown -r now)" != "" ]; then
+    if [ "$(sudo -n -l shutdown -r now)" != "" ]; then
       sudo shutdown -r now
     fi
   }
@@ -113,18 +76,18 @@ rebootsys() {
 }
 
 
-if [ -n "$zenity" ]; then
-  optio="$($zenity --title "$WM" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
-elif [ -n "$xdial" ]; then
-  optio="$($xdial --stdout --no-tags --title "$WM" --radiolist "$MESG" 13 43 9  "$LOGO" "$LOGO" ON "$REST" "$REST" OFF "$HALT" "$HALT" OFF)"
+if [ -n "$ZENITY" ]; then
+  OPTIO="$(zenity --title "$NAME" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
+elif [ -n "$XDIALOG" ]; then
+  OPTIO="$(Xdialog --stdout --no-tags --title "$NAME" --radiolist "$MESG" 13 43 9  "$LOGO" "$LOGO" ON "$REST" "$REST" OFF "$HALT" "$HALT" OFF)"
 else
-  export MESG LOGO REST HALT dial
-  $xtrm -T "$WM" -g 43x10 -e 'echo $($dial --no-shadow --stdout --radiolist "$MESG" 10 43 9 "$LOGO" "" ON "$REST" "" OFF "$HALT" "" OFF) >/dev/shm/exit-wm.cmd'
-  optio="$(cat /dev/shm/exit-wm.cmd)"
+  export MESG LOGO REST HALT
+  xterm -T "$NAME" -g 43x10 -e 'echo $(dialog --no-shadow --stdout --radiolist "$MESG" 10 43 9 "$LOGO" "" ON "$REST" "" OFF "$HALT" "" OFF) >/dev/shm/exit-wm.cmd'
+  OPTIO="$(cat /dev/shm/exit-wm.cmd)"
   rm -f /dev/shm/exit-wm.cmd
 fi
 
-case "$optio" in
+case "$OPTIO" in
   "$LOGO")  killwm ;;
   "$REST")  rebootsys ;;
   "$HALT")  haltsys ;;
