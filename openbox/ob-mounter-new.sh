@@ -169,7 +169,7 @@ ejectitem() {
    echo "  </item>"
 }
 mountpath() {
-   # $1 = media
+   # $1 = devinfo
    local mnt="$(grep -w -e "$(getinfo "$1" $DINF_DEV)" /etc/mtab)"
    mnt="${mnt##*/}" ; mnt="${mnt%% *}"
    [ "$mnt" != "" ] && mnt="/media/$mnt"
@@ -186,8 +186,8 @@ ismountedsys() {
 }
 media2menu() {
    # $1 = devinfo
-   local cmd fmn fm x=0 title cdir dtype=$(getinfo "$1" $DINF_TYPE)
-   local l=${#FILEMANS[@]}
+   local cmd fmn fm title cdir dtype=$(getinfo "$1" $DINF_TYPE)
+   local l=${#FILEMANS[@]} x=0
    local lab="$(getinfo "$1" $DINF_LABEL)"
    [ "${lab/__/}" ==  "$lab" ] && title="${lab//_/__}" || title="$lab"
    local mntpath="$(mountpath "$1")"
@@ -293,36 +293,32 @@ mediamenu() {
    fi
 }
 splitmedias() {
-   local media uidev medias=() i=0 dtype dinf
+   local media dtype dinf
    for media in /dev/disk/by-uuid/*; do
       dinf="$(makeinfo "$media")"
       if [ -n "$dinf" ]; then
-         medias[$i]="$dinf"
-         (( i++ ))
-      fi
-   done
-   for media in ${medias[@]}; do
-      dtype="$(getinfo "$media" "$DINF_TYPE")"
-      if ( ismounted "$media" ); then
-         case $dtype in
-            $MTYPE_USB)
-               MUSBTAB[${#MUSBTAB[@]}]="$media" ;;
-            $MTYPE_CDROM)
-               MCDTAB[${#MCDTAB[@]}]="$media" ;;
-            $MTYPE_PART)
-               if (! ismountedsys "$media" ); then
-                  MPARTAB[${#MPARTAB[@]}]="$media"
-               fi ;;
-         esac
-      else
-         case $dtype in
-            $MTYPE_USB)
-               USBTAB[${#USBTAB[@]}]="$media" ;;
-            $MTYPE_CDROM)
-               CDTAB[${#CDTAB[@]}]="$media" ;;
-            $MTYPE_PART)
-               PARTAB[${#PARTAB[@]}]="$media" ;;
-         esac
+         dtype="$(getinfo "$dinf" "$DINF_TYPE")"
+         if ( ismounted "$dinf" ); then
+            case $dtype in
+               $MTYPE_USB)
+                  MUSBTAB[${#MUSBTAB[@]}]="$dinf" ;;
+               $MTYPE_CDROM)
+                  MCDTAB[${#MCDTAB[@]}]="$dinf" ;;
+               $MTYPE_PART)
+                  if (! ismountedsys "$dinf" ); then
+                     MPARTAB[${#MPARTAB[@]}]="$dinf"
+                  fi ;;
+            esac
+         else
+            case $dtype in
+               $MTYPE_USB)
+                  USBTAB[${#USBTAB[@]}]="$dinf" ;;
+               $MTYPE_CDROM)
+                  CDTAB[${#CDTAB[@]}]="$dinf" ;;
+               $MTYPE_PART)
+                  PARTAB[${#PARTAB[@]}]="$dinf" ;;
+            esac
+         fi
       fi
    done
 }
