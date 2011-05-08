@@ -96,12 +96,12 @@ ejecter() {
 makeinfo() {
    # $1 = dev
    local medi typ=-1 lab dev
-   medi="$(udevadm info --query=property --name="$1"|grep -e "USB" -e "CDROM" -e "PARTITION=" \
-      -e "ID_FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
-   [[ "${medi}" != "${medi/USB/}" ]] && typ=$MTYPE_USB
-   [[ "${medi}" != "${medi/CDROM/}" ]] && typ=$MTYPE_CDROM
+   medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
+      -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
+   [[ "${medi}" != "${medi/=usb/}" ]] && typ=$MTYPE_USB
+   [[ "${medi}" != "${medi/=cd/}" ]] && typ=$MTYPE_CDROM
    [[ "${medi}" != "${medi/PARTITION=/}" ]] && typ=$MTYPE_PART
-   [[ "${medi}" != "${medi/ID_FS_TYPE=swap/}" ]] && return
+   [[ "${medi}" != "${medi/=swap/}" ]] && return
    lab=(${medi/*LABEL_ENC=/})
    [[ "${lab[@]}" == "${medi}" ]] && lab=(${medi/*UUID_ENC=/})
    dev=(${medi/*DEVNAME=/})
@@ -114,7 +114,8 @@ getinfo() {
 }
 ismounted() {
    # $1 = devinfo
-   grep -qw -e "$(getinfo "$1" $DINF_DEV)" -e "/media/$(getinfo "$1" $DINF_LABEL)" /etc/mtab
+   local lab="$(getinfo "$1" $DINF_LABEL)"
+   grep -qw -e "/dev/disk/by-label/$lab" -e "$(getinfo "$1" $DINF_DEV)" -e "/media/$lab" /etc/mtab
 }
 ejectableusb() {
    # $1 = devinfo usb
@@ -179,9 +180,8 @@ mountpath() {
 ismountedsys() {
    # $1 = devinfo
    for d in / /boot /home /tmp /usr /var; do
-      if (grep -qw -e "$(getinfo "$1" $DINF_DEV) $d" /etc/mtab); then
-         return 0
-      fi
+      grep -qw -e "/dev/disk/by-label/$(getinfo "$1" $DINF_LABEL) $d" \
+         -e "$(getinfo "$1" $DINF_DEV) $d" /etc/mtab && return 0
    done
    return 1
 }
