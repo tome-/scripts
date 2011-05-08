@@ -94,7 +94,7 @@ ejecter() {
 }
 disktype() {
    # $1 = dev name
-   info="$(udevadm info --query=property --name="$1")"
+   local info="$(udevadm info --query=property --name="$1")"
    if [ "$info" != "${info/USB/}" ]; then
       return $MTYPE_USB
    elif [ "$info" != "${info/CDROM/}" ]; then
@@ -110,7 +110,8 @@ ismounted() {
 }
 fixlabel() {
    # $1 = media
-   local info="$(udevadm info --query=property --name="$1")" tab=()
+   local info tab=()
+   info="$(udevadm info --query=property --name="$1"|grep -e "LABEL" -e "UUID")"
    if [ "${info/LABEL=/}" != "$info" ]; then
       tab=(${info/*LABEL_ENC=/})
    else
@@ -347,5 +348,4 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 echo "<openbox_pipe_menu>"
 mediamenu
 echo "</openbox_pipe_menu>"
-
 

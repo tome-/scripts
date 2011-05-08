@@ -96,7 +96,8 @@ ejecter() {
 makeinfo() {
    # $1 = dev
    local medi typ=-1 lab dev
-   medi="$(udevadm info --query=property --name="$1")" || return
+   medi="$(udevadm info --query=property --name="$1"|grep -e "USB" -e "CDROM" -e "PARTITION=" \
+      -e "ID_FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
    [[ "${medi}" != "${medi/USB/}" ]] && typ=$MTYPE_USB
    [[ "${medi}" != "${medi/CDROM/}" ]] && typ=$MTYPE_CDROM
    [[ "${medi}" != "${medi/PARTITION=/}" ]] && typ=$MTYPE_PART
