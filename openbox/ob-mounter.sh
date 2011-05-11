@@ -98,10 +98,10 @@ makeinfo() {
    local medi typ=-1 lab dev
    medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
       -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
-   if   [[ "${medi}" != "${medi/=usb/}" ]]; then typ=$MTYPE_USB
-   elif [[ "${medi}" != "${medi/=cd/}" ]]; then typ=$MTYPE_CDROM
-   elif [[ "${medi}" != "${medi/PARTITION=/}" ]]; then  typ=$MTYPE_PART
-   elif [[ "${medi}" != "${medi/=swap/}" ]]; then return; fi
+   [[ "${medi}" != "${medi/PARTITION=/}" ]] && typ=$MTYPE_PART
+   [[ "${medi}" != "${medi/=usb/}" ]] && typ=$MTYPE_USB
+   [[ "${medi}" != "${medi/=cd/}" ]] && typ=$MTYPE_CDROM
+   [[ "${medi}" != "${medi/=swap/}" ]] && return
    lab=(${medi/*LABEL_ENC=/})
    [[ "${lab[@]}" == "${medi}" ]] && lab=(${medi/*UUID_ENC=/})
    dev=(${medi/*DEVNAME=/})
