@@ -57,6 +57,7 @@ declare -a MUSBTAB MCDTAB MPARTAB
 
 # --- constans ---
 declare -r MTYPE_USB=0 MTYPE_CDROM=1 MTYPE_PART=2
+declare -r DINF_TYPE=0 DINF_LABEL=1 DINF_DEV=2
 declare -r ICONTAB=(drive-removable-media drive-cdrom drive-harddisk)
 declare -r MTYPETAB=(usb cdrom $PARTMSG)
 
@@ -65,23 +66,23 @@ declare -r MTYPETAB=(usb cdrom $PARTMSG)
 
 # --- functions ---
 mounter() {
-   # $1 = media
+   # $1 = devinfo
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      echo "udisks --mount \"$1\""
+      echo "udisks --mount \"$(getinfo "$1" $DINF_DEV)\""
    else
-      echo "pmount -e \"$1\" \"$(fixlabel "$1")\""
+      echo "pmount -e \"$(getinfo "$1" $DINF_DEV)\" \"$(getinfo "$1" $DINF_LABEL)\""
    fi
 }
 umounter() {
-   # $1 = media
+   # $1 = devinfo
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      echo "udisks --unmount \"$1\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
+      echo "udisks --unmount \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
    else
-      echo "pumount \"$1\""
+      echo "pumount \"$(getinfo "$1" $DINF_DEV)\""
    fi
 }
 ejecter() {
-   # $1 = media , $2 = mtype
+   # $1 = dev , $2 = dtype
    local tab=(eject eject)
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
       tab=("udisks --detach" "udisks --eject")
@@ -92,41 +93,38 @@ ejecter() {
    fi
    echo "${tab[$2]} \"$1\""
 }
-disktype() {
-   # $1 = dev name
-   local info="$(udevadm info --query=property --name="$1")"
-   if [ "$info" != "${info/USB/}" ]; then
-      return $MTYPE_USB
-   elif [ "$info" != "${info/CDROM/}" ]; then
-      return $MTYPE_CDROM
-   elif [ "$info" != "${info/swap/}" ]; then
-      return 10
-   fi
-   return $MTYPE_PART
+makeinfo() {
+   # $1 = dev
+   local medi typ=-1 lab dev
+   medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
+      -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
+   if   [[ "${medi}" != "${medi/=usb/}" ]]; then typ=$MTYPE_USB
+   elif [[ "${medi}" != "${medi/=cd/}" ]]; then typ=$MTYPE_CDROM
+   elif [[ "${medi}" != "${medi/PARTITION=/}" ]]; then  typ=$MTYPE_PART
+   elif [[ "${medi}" != "${medi/=swap/}" ]]; then return; fi
+   lab=(${medi/*LABEL_ENC=/})
+   [[ "${lab[@]}" == "${medi}" ]] && lab=(${medi/*UUID_ENC=/})
+   dev=(${medi/*DEVNAME=/})
+   echo -e "${typ}:${lab[0]}:${dev[0]}"
+}
+getinfo() {
+   # $1 = devinfo , $2 = info type
+   local IFS=":" tab
+   tab=($1) ; echo ${tab[$2]}
 }
 ismounted() {
-   # $1 = media
-   grep -qw -e "$1" -e "$(readlink -f "$1")" /etc/mtab
-}
-fixlabel() {
-   # $1 = media
-   local info tab=()
-   info="$(udevadm info --query=property --name="$1"|grep -e "LABEL" -e "UUID")"
-   if [ "${info/LABEL=/}" != "$info" ]; then
-      tab=(${info/*LABEL_ENC=/})
-   else
-      tab=(${info/*UUID_ENC=/})
-   fi
-   echo -e ${tab[0]}
+   # $1 = devinfo
+   local lab="$(getinfo "$1" $DINF_LABEL)"
+   grep -qw -e "/dev/disk/by-label/$lab" -e "$(getinfo "$1" $DINF_DEV)" -e "/media/$lab" /etc/mtab
 }
 ejectableusb() {
-   # $1 = media usb
+   # $1 = devinfo usb
    local ejdev ejdevp ejdevm medi noeject=0
-   ejdevp="$(readlink -f "$1")" ; ejdev="${ejdevp/[1-9]/}"
+   ejdevp="$(getinfo "$1" $DINF_DEV)" ; ejdev="${ejdevp/[1-9]/}"
    if [ "$ejdev" != "$ejdevp" ]; then
       if [ ${#MUSBTAB[@]} != 0 ]; then
          for medi in "${MUSBTAB[@]}"; do
-            ejdevm="$(readlink -f "$medi")"
+            ejdevm="$(getinfo "$medi" $DINF_DEV)"
             if [ "$ejdev" == "${ejdevm/[1-9]/}" ]; then
                noeject=1 ; break
             fi
@@ -144,10 +142,10 @@ mountitem() {
    echo "  </item>"
 }
 umountitem() {
-   # $1 = media , $2 = media type
+   # $1 = devinfo
    local cmd="$(umounter "$1")"
    if [ -n "$NOTIFY" ]; then
-      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$2]}\" \"$(fixlabel "$1"):  $UMOUNTEDMSG.\"'"
+      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
    fi
    echo "  <item label=\"$UMOUNTMSG\">"
    echo "   <action name=\"execute\">"
@@ -156,14 +154,15 @@ umountitem() {
    echo "  </item>"
 }
 ejectitem() {
-   # $1 = media , $2 = media type
-   local medi="$1" cmd
-   if [ $2 == $MTYPE_USB ]; then
-      medi="$(readlink -f "$1")" ; medi="${medi/[1-9]/}"
+   # $1 = devinfo
+   local medi="$(getinfo "$1" $DINF_DEV)"
+   local cmd dtype=$(getinfo "$1" $DINF_TYPE)
+   if [ $dtype == $MTYPE_USB ]; then
+      medi="${medi/[1-9]/}"
    fi
-   cmd="$(ejecter "$medi" $2)"
+   cmd="$(ejecter "$medi" $dtype)"
    if [ -n "$NOTIFY" ]; then
-      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$2]}\" \"$(fixlabel "$1"):  $EJECTEDMSG.\"'"
+      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$dtype]}\" \"$(getinfo "$1" $DINF_LABEL):  $EJECTEDMSG.\"'"
    fi
    echo "  <item label=\"$EJECTMSG\">"
    echo "   <action name=\"execute\">"
@@ -172,30 +171,29 @@ ejectitem() {
    echo "  </item>"
 }
 mountpath() {
-   # $1 = media
-   local mnt="$(grep -w -e "$1" -e "$(readlink -f "$1")" /etc/mtab)"
+   # $1 = devinfo
+   local mnt="$(grep -w -e "$(getinfo "$1" $DINF_DEV)" /etc/mtab)"
    mnt="${mnt##*/}" ; mnt="${mnt%% *}"
    [ "$mnt" != "" ] && mnt="/media/$mnt"
    echo -e "$mnt"
 }
 ismountedsys() {
-   # $1 = dev
+   # $1 = devinfo
    for d in / /boot /home /tmp /usr /var; do
-      if (grep -qw -e "$1 $d" -e "$(readlink -f "$1") $d" /etc/mtab); then
-         return 0
-      fi
+      grep -qw -e "/dev/disk/by-label/$(getinfo "$1" $DINF_LABEL) $d" \
+         -e "$(getinfo "$1" $DINF_DEV) $d" /etc/mtab && return 0
    done
    return 1
 }
 media2menu() {
-   # $1 = media , $2 = mediatype
-   local cmd fmn fm x=0 title cdir
-   local l=${#FILEMANS[@]}
-   local lab="$(fixlabel "$1")"
+   # $1 = devinfo
+   local cmd fmn fm title cdir dtype=$(getinfo "$1" $DINF_TYPE)
+   local l=${#FILEMANS[@]} x=0
+   local lab="$(getinfo "$1" $DINF_LABEL)"
    [ "${lab/__/}" ==  "$lab" ] && title="${lab//_/__}" || title="$lab"
    local mntpath="$(mountpath "$1")"
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
-   echo "  <separator label=\"${MTYPETAB[$2]}: $lab\"/>"
+   echo "  <separator label=\"${MTYPETAB[$dtype]}: $lab\"/>"
    while [[ $x < $l ]]; do
       cdir=0 ; fm="${FILEMANS[$x]}" ; fmn="$fm"
       if [ "${fm}" != "${fm/*,/}" ]; then
@@ -227,14 +225,14 @@ media2menu() {
    done
    echo "  <separator/>"
    if [ -n "$mntpath" ]; then
-      umountitem "$1" $2
+      umountitem "$1"
    else
       mountitem "$1"
-      if [ $2 == $MTYPE_CDROM ]; then
-         ejectitem "$1" $2
-      elif [ $2 == $MTYPE_USB ]; then
+      if [ $dtype == $MTYPE_CDROM ]; then
+         ejectitem "$1"
+      elif [ $dtype == $MTYPE_USB ]; then
          if ( ejectableusb "$1" ); then
-            ejectitem "$1" $2
+            ejectitem "$1"
          fi
       fi
    fi
@@ -296,45 +294,32 @@ mediamenu() {
    fi
 }
 splitmedias() {
-   local uidev nonew devtab=() medias=()
-   local i=0 media medi dtype
-   for media in /dev/disk/by-label/*; do
-      devtab[$i]="$(readlink -f "$media")"
-      medias[$i]="$media" ; ((i++))
-   done
+   local media dtype dinf
    for media in /dev/disk/by-uuid/*; do
-      uidev=$(readlink -f "$media") ; nonew=
-      for medi in ${devtab[@]}; do
-         if [ "$uidev" == "$medi" ]; then
-            nonew=1 ; break
+      dinf="$(makeinfo "$media")"
+      if [ -n "$dinf" ]; then
+         dtype="$(getinfo "$dinf" "$DINF_TYPE")"
+         if ( ismounted "$dinf" ); then
+            case $dtype in
+               $MTYPE_USB)
+                  MUSBTAB[${#MUSBTAB[@]}]="$dinf" ;;
+               $MTYPE_CDROM)
+                  MCDTAB[${#MCDTAB[@]}]="$dinf" ;;
+               $MTYPE_PART)
+                  if (! ismountedsys "$dinf" ); then
+                     MPARTAB[${#MPARTAB[@]}]="$dinf"
+                  fi ;;
+            esac
+         else
+            case $dtype in
+               $MTYPE_USB)
+                  USBTAB[${#USBTAB[@]}]="$dinf" ;;
+               $MTYPE_CDROM)
+                  CDTAB[${#CDTAB[@]}]="$dinf" ;;
+               $MTYPE_PART)
+                  PARTAB[${#PARTAB[@]}]="$dinf" ;;
+            esac
          fi
-      done
-      if [ -z "$nonew" ] ; then
-         medias[$i]="$uidev" ; ((i++))
-      fi
-   done
-   for media in ${medias[@]}; do
-      disktype "$media" ; dtype=$?
-      if ( ismounted "$media" ); then
-         case $dtype in
-            $MTYPE_USB)
-               MUSBTAB[${#MUSBTAB[@]}]="$media" ;;
-            $MTYPE_CDROM)
-               MCDTAB[${#MCDTAB[@]}]="$media" ;;
-            $MTYPE_PART)
-               if (! ismountedsys "$media" ); then
-                  MPARTAB[${#MPARTAB[@]}]="$media"
-               fi ;;
-         esac
-      else
-         case $dtype in
-            $MTYPE_USB)
-               USBTAB[${#USBTAB[@]}]="$media" ;;
-            $MTYPE_CDROM)
-               CDTAB[${#CDTAB[@]}]="$media" ;;
-            $MTYPE_PART)
-               PARTAB[${#PARTAB[@]}]="$media" ;;
-         esac
       fi
    done
 }
@@ -348,4 +333,5 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 echo "<openbox_pipe_menu>"
 mediamenu
 echo "</openbox_pipe_menu>"
+
 
