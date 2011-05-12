@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf8 -*-
 ## Name:     2divx
 ## About:    simple python wrapper for mencoder
 ## Author:   grimi < grimi at poczta dot fm >
@@ -7,12 +6,12 @@
 ## Licence:  GNU GPL v3
 
 
+from __future__ import unicode_literals,print_function
+
 class Todivx:
    def __init__(self):
       from os import getenv
       self.lang = getenv('LANG').split('_')[0]
-      from sys import version
-      self.vers = int(version.split('.')[0])
       if self.lang == "pl":
          self.msgtab = {"usage":"%prog [opcje] <plik wideo> [...]",
             "out":"nazwa docelowego wideo (domyślnie: taka jak źródłowego [z rozszerzeniem .avi])",
@@ -45,32 +44,26 @@ class Todivx:
             "test":"put command line to stdout","erargs":"Required at least one arg. Maybe try -h option!",
             "break":"\n... breaking up, ctrl-c was used ..."}
 
-   def getmsg23(self,ident):
-      if self.vers == 3:
-         return self.msgtab[ident]
-      else:
-         return self.msgtab[ident].decode('utf8')
-
    def parseargs(self):
       from  optparse import OptionParser
-      self.parser = OptionParser(usage=self.getmsg23("usage"))
-      self.parser.add_option("-o","--output",type="string",default=None,help=self.getmsg23("out"))
-      self.parser.add_option("-v","--vbitr",type="int",default="900",help=self.getmsg23("video"))
-      self.parser.add_option("-a","--abitr",type="int",default="128",help=self.getmsg23("audio"))
-      self.parser.add_option("-c","--crop",type="string",default=None,help=self.getmsg23("crop"))
-      self.parser.add_option("-s","--scale",type="string",default=None,help=self.getmsg23("scale"))
-      self.parser.add_option("-b","--band",type="string",default=None,help=self.getmsg23("band"))
-      self.parser.add_option("-f","--fps",type="float",default=0,help=self.getmsg23("fps"))
-      self.parser.add_option("-m","--mbd",type="int",default=2,help=self.getmsg23("mbd"))
-      self.parser.add_option("-r","--freq",type="int",default=44100,help=self.getmsg23("freq"))
-      self.parser.add_option("-i","--sub",type="string",default=None,help=self.getmsg23("subt"))
-      self.parser.add_option("-u","--vol",type="int",default=0,help=self.getmsg23("vol"))
-      self.parser.add_option("-d","--threads",type="int",default=1,help=self.getmsg23("threads"))
-      self.parser.add_option("-t","--trell",action="store_true",help=self.getmsg23("trell"))
-      self.parser.add_option("-x","--xvid",action="store_true",help=self.getmsg23("xvid"))
-      self.parser.add_option("-n","--noskip",action="store_true",help=self.getmsg23("nskip"))
-      self.parser.add_option("-k","--test",action="store_true",help=self.getmsg23("test"))
-      self.parser.add_option("-V","--verbose",action="store_true",help=self.getmsg23("verb"))
+      self.parser = OptionParser(usage=self.msgtab["usage"])
+      self.parser.add_option("-o","--output",type="string",default=None,help=self.msgtab["out"])
+      self.parser.add_option("-v","--vbitr",type="int",default="900",help=self.msgtab["video"])
+      self.parser.add_option("-a","--abitr",type="int",default="128",help=self.msgtab["audio"])
+      self.parser.add_option("-c","--crop",type="string",default=None,help=self.msgtab["crop"])
+      self.parser.add_option("-s","--scale",type="string",default=None,help=self.msgtab["scale"])
+      self.parser.add_option("-b","--band",type="string",default=None,help=self.msgtab["band"])
+      self.parser.add_option("-f","--fps",type="float",default=0,help=self.msgtab["fps"])
+      self.parser.add_option("-m","--mbd",type="int",default=2,help=self.msgtab["mbd"])
+      self.parser.add_option("-r","--freq",type="int",default=44100,help=self.msgtab["freq"])
+      self.parser.add_option("-i","--sub",type="string",default=None,help=self.msgtab["subt"])
+      self.parser.add_option("-u","--vol",type="int",default=0,help=self.msgtab["vol"])
+      self.parser.add_option("-d","--threads",type="int",default=1,help=self.msgtab["threads"])
+      self.parser.add_option("-t","--trell",action="store_true",help=self.msgtab["trell"])
+      self.parser.add_option("-x","--xvid",action="store_true",help=self.msgtab["xvid"])
+      self.parser.add_option("-n","--noskip",action="store_true",help=self.msgtab["nskip"])
+      self.parser.add_option("-k","--test",action="store_true",help=self.msgtab["test"])
+      self.parser.add_option("-V","--verbose",action="store_true",help=self.msgtab["verb"])
       self.opts,self.args = self.parser.parse_args()
 
    def buildcmd(self):
@@ -187,13 +180,13 @@ class Todivx:
                   print()
                pr.wait()
             except KeyboardInterrupt:
-               print(self.getmsg23("break"))
+               print(self.msgtab["break"])
             try: pr.kill()
             except: pass
       elif len(self.args) == 0:
          self.parser.print_usage()
       else:
-         print(self.getmsg23("erargs"))
+         print(self.msgtab["erargs"])
 #########
 
 
