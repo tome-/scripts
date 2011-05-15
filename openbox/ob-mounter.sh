@@ -297,12 +297,14 @@ mediamenu() {
 }
 splitmedias() {
    local media dtype dinf
-   for media in /dev/disk/by-uuid/*; do
+   for media in /dev/{cd/cdrom-,disk/by-uuid/}*; do
       dinf="$(makeinfo "$media")"
       if [ -n "$dinf" ]; then
          dtype="$(getinfo "$dinf" "$DINF_TYPE")"
          if ( ismounted "$dinf" ); then
             case $dtype in
+               $MTYPE_CDROM)
+                  MCDTAB[${#MCDTAB[@]}]="$dinf" ;;
                $MTYPE_USB)
                   MUSBTAB[${#MUSBTAB[@]}]="$dinf" ;;
                $MTYPE_PART)
@@ -312,22 +314,13 @@ splitmedias() {
             esac
          else
             case $dtype in
+               $MTYPE_CDROM)
+                  CDTAB[${#CDTAB[@]}]="$dinf" ;;
                $MTYPE_USB)
                   USBTAB[${#USBTAB[@]}]="$dinf" ;;
                $MTYPE_PART)
                   PARTAB[${#PARTAB[@]}]="$dinf" ;;
             esac
-         fi
-      fi
-   done
-   for media in /dev/cd/cdrom-*; do
-      dinf="$(makeinfo "$media")"
-      if [ -n "$dinf" ]; then
-         dtype="$(getinfo "$dinf" "$DINF_TYPE")"
-         if ( ismounted "$dinf" ); then
-            MCDTAB[${#MCDTAB[@]}]="$dinf"
-         else
-            CDTAB[${#CDTAB[@]}]="$dinf"
          fi
       fi
    done
