@@ -95,15 +95,17 @@ ejecter() {
 }
 makeinfo() {
    # $1 = dev
-   local medi typ=-1 lab dev
+   local medi typ=-1 lab dev tmp
    medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
       -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
    [[ "${medi}" != "${medi/PARTITION=/}" ]] && typ=$MTYPE_PART
    [[ "${medi}" != "${medi/=usb/}" ]] && typ=$MTYPE_USB
    [[ "${medi}" != "${medi/=cd/}" ]] && typ=$MTYPE_CDROM
    [[ "${medi}" != "${medi/=swap/}" ]] && return
-   lab=(${medi/*LABEL_ENC=/})
-   [[ "${lab[@]}" == "${medi}" ]] && lab=(${medi/*UUID_ENC=/})
+   lab="${medi/*LABEL_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && {
+      lab="${medi/*UUID_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && return
+   }
+   lab=(${lab})
    dev=(${medi/*DEVNAME=/})
    echo -e "${typ}:${lab[0]}:${dev[0]}"
 }
@@ -303,8 +305,6 @@ splitmedias() {
             case $dtype in
                $MTYPE_USB)
                   MUSBTAB[${#MUSBTAB[@]}]="$dinf" ;;
-               $MTYPE_CDROM)
-                  MCDTAB[${#MCDTAB[@]}]="$dinf" ;;
                $MTYPE_PART)
                   if (! ismountedsys "$dinf" ); then
                      MPARTAB[${#MPARTAB[@]}]="$dinf"
@@ -314,11 +314,20 @@ splitmedias() {
             case $dtype in
                $MTYPE_USB)
                   USBTAB[${#USBTAB[@]}]="$dinf" ;;
-               $MTYPE_CDROM)
-                  CDTAB[${#CDTAB[@]}]="$dinf" ;;
                $MTYPE_PART)
                   PARTAB[${#PARTAB[@]}]="$dinf" ;;
             esac
+         fi
+      fi
+   done
+   for media in /dev/cd/cdrom-*; do
+      dinf="$(makeinfo "$media")"
+      if [ -n "$dinf" ]; then
+         dtype="$(getinfo "$dinf" "$DINF_TYPE")"
+         if ( ismounted "$dinf" ); then
+            MCDTAB[${#MCDTAB[@]}]="$dinf"
+         else
+            CDTAB[${#CDTAB[@]}]="$dinf"
          fi
       fi
    done

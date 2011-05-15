@@ -72,6 +72,7 @@ class hamachi():
                if clstat != "" and clstat[0] != "x":
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
+                  self.genActionItem('SSH - X','xterm -e "ssh -Y %s"' % clip,'  ')
                self.out += '  </menu>\n'
          if len(netstat) > 0 and netstat[0] == "*":
             self.out += '  <separator/>\n'
