@@ -98,7 +98,7 @@ fi
 if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
       pkgdef="${pkgdef} ; echo ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32} ${TXTRES}' ; \
-         read res32 ; [ \"\$res32\" == '$ANS_32' ] && bit32='linux32 ' && \
+         read res32 ; [ \"\${res32,,}\" == '$ANS_32' ] && bit32='linux32 ' && \
          package='${pkgname}-${pkgver}-${pkgrel}-i686${PKGEXT}'"
    fi
 fi
@@ -116,7 +116,7 @@ if [ "$archpkg" != "any" ]; then
             MSG_CC="${MSG_CC} ? ${MSG_yN}"
          fi
          cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC} ${TXTRES}' ; \
-               read cres ; [ \"\$cres\" == '$anscc' ] $ccvar"
+               read cres ; [ \"\${cres,,}\" == '$anscc' ] $ccvar ;"
          break
       fi
    done
@@ -124,7 +124,7 @@ fi
 
 cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
    echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
-   [ \"\$bres\" == '$ANS_EX' ] && (${cmd} ; echo ; \${bit32}makepkg -fcs) ; else (${cmd} ; echo ; \${bit32}makepkg -cs) ; fi"
+   [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fcs) ; else (${cmd} echo ; \${bit32}makepkg -cs) ; fi"
 
 
 if [ -n "$DEBUGMODE" ]; then
