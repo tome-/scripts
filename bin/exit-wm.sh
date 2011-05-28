@@ -79,7 +79,7 @@ rebootsys() {
 if [ -n "$ZENITY" ]; then
   OPTIO="$(zenity --title "$NAME" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
 elif [ -n "$XDIALOG" ]; then
-  OPTIO="$(Xdialog --stdout --no-tags --title "$NAME" --radiolist "$MESG" 13 43 9  "$LOGO" "$LOGO" ON "$REST" "$REST" OFF "$HALT" "$HALT" OFF)"
+  OPTIO="$(Xdialog --stdout --no-tags --title "$NAME" --radiolist "$MESG" 14 43 9  "$LOGO" "$LOGO" ON "$REST" "$REST" OFF "$HALT" "$HALT" OFF)"
 else
   export MESG LOGO REST HALT
   xterm -T "$NAME" -g 43x10 -e 'echo $(dialog --no-shadow --stdout --radiolist "$MESG" 10 43 9 "$LOGO" "" ON "$REST" "" OFF "$HALT" "" OFF) >/dev/shm/exit-wm.cmd'

@@ -19,35 +19,37 @@ case ${LANG%_*} in
       MSG_TR="uruchom w xterm"
       MSG_DG="nie wykonuj, pokaż linie komend"
       MSG_SH="buduj w /dev/shm"
-      MSG_EX="Pakiet już istnieje. Zbudować ponownie (t/N) ? "
+      MSG_EX="Pakiet już istnieje. Zbudować ponownie"
       ANS_EX="t"
-      MSG_32="Budować pakiet 32 bitowy (t/N) ? "
+      MSG_32="Budować pakiet 32 bitowy"
       ANS_32="t"
-      MSG_CC="Budować z ccache "
+      MSG_CC="Budować z ccache"
       ANS_TB=(t n)
-      MSG_Yn="(T/n) ? "
-      MSG_yN="(t/N) ? "
+      MSG_Yn="[T/n]"
+      MSG_yN="[t/N]"
    ;;
    *)
       MSG_US="USAGE"
       MSG_TR="exec in xterm"
       MSG_DG="don't exec, show cmd line"
       MSG_SH="build in /dev/shm"
-      MSG_EX="Package already exists. Build again (y/N) ? "
+      MSG_EX="Package already exists. Build again"
       ANS_EX="y"
-      MSG_32="Build 32 bit package (y/N) ? "
+      MSG_32="Build 32 bit package"
       ANS_32="y"
       MSG_CC="Build with ccache "
       ANS_TB=(y n)
-      MSG_Yn="(Y/n) ? "
-      MSG_yN="(y/N) ? "
+      MSG_Yn="[Y/n]"
+      MSG_yN="[y/N]"
    ;;
 esac
+MSG_EX="${MSG_EX} ? ${MSG_yN}"
+MSG_32="${MSG_32} ? ${MSG_yN}"
 
 
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}<PKGBUILD>${TXTRES}"
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}[PKGBUILD]${TXTRES}"
    echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
    echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
    echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
@@ -95,7 +97,7 @@ fi
 
 if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
-      pkgdef="${pkgdef} ; echo ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32}${TXTRES}' ; \
+      pkgdef="${pkgdef} ; echo ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32} ${TXTRES}' ; \
          read res32 ; [ \"\$res32\" == '$ANS_32' ] && bit32='linux32 ' && \
          package='${pkgname}-${pkgver}-${pkgrel}-i686${PKGEXT}'"
    fi
@@ -107,22 +109,22 @@ if [ "$archpkg" != "any" ]; then
          if [ -z "$CCACHE_DISABLE" ]; then
             ccvar='&& export CCACHE_DISABLE=1 || unset CCACHE_DISABLE'
             anscc="${ANS_TB[$ANNOP]}"
-            MSG_CC="${MSG_CC}${MSG_Yn}"
+            MSG_CC="${MSG_CC} ? ${MSG_Yn}"
          else
             ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1'
             anscc="${ANS_TB[$ANYES]}"
-            MSG_CC="${MSG_CC}${MSG_yN}"
+            MSG_CC="${MSG_CC} ? ${MSG_yN}"
          fi
-         cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC}${TXTRES}' ; \
-               read cres ; [ \"\$cres\" == '$anscc' ] $ccvar ; "
+         cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC} ${TXTRES}' ; \
+               read cres ; [ \"\$cres\" == '$anscc' ] $ccvar"
          break
       fi
    done
 fi
 
-cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo ; echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
-   echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX}${TXTRES}' ; read bres ; \
-   [ \"\$bres\" == '$ANS_EX' ] && (${cmd}\${bit32}makepkg -fcs) ; else (${cmd}\${bit32}makepkg -cs) ; fi"
+cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
+   echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
+   [ \"\$bres\" == '$ANS_EX' ] && (${cmd} ; echo ; \${bit32}makepkg -fcs) ; else (${cmd} ; echo ; \${bit32}makepkg -cs) ; fi"
 
 
 if [ -n "$DEBUGMODE" ]; then
