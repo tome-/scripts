@@ -20,7 +20,7 @@ case ${LANG%_*} in
       MSG_DG="nie wykonuj, pokaż linie komend"
       MSG_SH="buduj w /dev/shm"
       MSG_SR="generuj archiwum źródłowe"
-      MSG_HE="pomoc ..."
+      MSG_HE="ten tekst"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie"
       ANS_EX="t"
       MSG_32="Budować pakiet 32 bitowy"
@@ -36,7 +36,7 @@ case ${LANG%_*} in
       MSG_DG="don't exec, show cmd line"
       MSG_SH="build in /dev/shm"
       MSG_SR="generate a source-only tarball"
-      MSG_HE="help message"
+      MSG_HE="this message"
       MSG_EX="Package already exists. Build again"
       ANS_EX="y"
       MSG_32="Build 32 bit package"
@@ -135,13 +135,14 @@ if [ "$archpkg" != "any" ]; then
    done
 fi
 
+if [ -n "$GENSOURCE" ]; then
+   cmd="${cmd} echo ; makepkg --source -f ;"
+fi
+
 cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
    echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
    [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fcs) ; else (${cmd} echo ; \${bit32}makepkg -cs) ; fi"
 
-if [ -n "$GENSOURCE" ]; then
-   cmd="$cmd ; echo ; makepkg --source -fc"
-fi
 
 if [ -n "$DEBUGMODE" ]; then
    echo -e "$cmd"
