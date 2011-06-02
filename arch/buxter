@@ -19,6 +19,8 @@ case ${LANG%_*} in
       MSG_TR="uruchom w xterm"
       MSG_DG="nie wykonuj, pokaż linie komend"
       MSG_SH="buduj w /dev/shm"
+      MSG_SR="generuj archiwum źródłowe"
+      MSG_HE="pomoc ..."
       MSG_EX="Pakiet już istnieje. Zbudować ponownie"
       ANS_EX="t"
       MSG_32="Budować pakiet 32 bitowy"
@@ -33,11 +35,13 @@ case ${LANG%_*} in
       MSG_TR="exec in xterm"
       MSG_DG="don't exec, show cmd line"
       MSG_SH="build in /dev/shm"
+      MSG_SR="generate a source-only tarball"
+      MSG_HE="help message"
       MSG_EX="Package already exists. Build again"
       ANS_EX="y"
       MSG_32="Build 32 bit package"
       ANS_32="y"
-      MSG_CC="Build with ccache "
+      MSG_CC="Build with ccache"
       ANS_TB=(y n)
       MSG_Yn="[Y/n]"
       MSG_yN="[y/N]"
@@ -49,21 +53,30 @@ MSG_32="${MSG_32} ? ${MSG_yN}"
 
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-ts] [-d] ${BLDRED}[PKGBUILD]${TXTRES}"
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-tsgdh] ${BLDRED}[PKGBUILD]${TXTRES}"
    echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
-   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
    echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
+   echo -e "    ${BLDWHI}-g${TXTRES}    ${MSG_SR}"
+   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
+   echo -e "    ${BLDWHI}-h${TXTRES}    ${MSG_HE}"
    exit 1
 }
 
 
-case "$1" in
-   "-t")          TERMODE=1 && shift ;;
-   "-s")          BUILDSHM=1 && shift ;;
-   "-ts"|"-st")   TERMODE=1 && BUILDSHM=1 && shift ;;
-   "-d")          DEBUGMODE=1 && shift ;;
-   "-h"|"--help") usage ;;
-esac
+while [ "${1:0:1}" == "-" ]; do
+   i=1
+   while [ "${1:$i:1}" ]; do
+      case "${1:$i:1}" in
+         t)    TERMODE=1 ;;
+         s)    BUILDSHM=1 ;;
+         g)    GENSOURCE=1 ;;
+         d)    DEBUGMODE=1 ;;
+         h)    usage ;;
+      esac
+      (( i++ ))
+   done
+   shift
+done
 
 
 if [ ! -f PKGBUILD ]; then
@@ -126,6 +139,9 @@ cmd="${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL
    echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
    [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fcs) ; else (${cmd} echo ; \${bit32}makepkg -cs) ; fi"
 
+if [ -n "$GENSOURCE" ]; then
+   cmd="$cmd ; echo ; makepkg --source -fc"
+fi
 
 if [ -n "$DEBUGMODE" ]; then
    echo -e "$cmd"
