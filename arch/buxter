@@ -135,13 +135,15 @@ if [ "$archpkg" != "any" ]; then
    done
 fi
 
-if [ -n "$GENSOURCE" ]; then
-   cmd="${cmd} echo ; makepkg --source -f ;"
-fi
 
 cmd="echo ; ${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
    echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
-   [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fcs) ; else (${cmd} echo ; \${bit32}makepkg -cs) ; fi"
+   [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fs) ; else (${cmd} echo ; \${bit32}makepkg -s) ; fi"
+
+
+if [ -n "$GENSOURCE" ]; then
+   cmd="${cmd} ; echo ; makepkg --source -f"
+fi
 
 
 if [ -n "$DEBUGMODE" ]; then
@@ -155,5 +157,7 @@ fi
 
 [ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
 [ -h src ] && rm -f src
+[ -d pkg ] && rm -fr pkg
+
 
 
