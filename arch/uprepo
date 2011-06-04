@@ -38,7 +38,7 @@ SetMsg() {
    case $PACNR in
       0) MSG="no updates" ;;
       1) MSG="1 package" ;;
-      *) MSG="$1 packages" ;;
+      *) MSG="$PACNR packages" ;;
    esac
 }
 

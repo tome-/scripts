@@ -157,6 +157,7 @@ fi
 
 [ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
 [ -h src ] && rm -f src
+[ -d src ] && rm -fr src
 [ -d pkg ] && rm -fr pkg
 
 
