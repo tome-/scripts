@@ -244,7 +244,7 @@ devsmenu() {
    fi
 }
 splitdevs() {
-   local dev dtype dinf mnt dm nosys=1
+   local dev dtype dinf mnt dm nosys
    for dev in /dev/{sr[0-9],disk/by-uuid/*}; do
       dinf="$(makeinfo "$dev")"
       if [ -n "$dinf" ]; then
@@ -256,10 +256,10 @@ splitdevs() {
                USBTAB[${#USBTAB[@]}]="$dinf" ;;
             $DTYPE_PART)
                if [ $MOUNTPART -eq 1 ]; then
-                  mnt="$(getinfo "$dinf" $DINF_MPATH)"
+                  mnt="$(getinfo "$dinf" $DINF_MPATH)" ; nosys=1
                   if [ -n "$mnt" ]; then
                      for dm in / /boot /home /tmp /usr /var; do
-                        [[ "$mnt" == "$dm" ]]  && { nosys=0; break; }
+                        [ "$mnt" == "$dm" ] && { nosys=0; break; }
                      done
                   fi
                   [ $nosys -eq 1 ] && PARTAB[${#PARTAB[@]}]="$dinf"
