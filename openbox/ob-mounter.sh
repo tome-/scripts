@@ -165,15 +165,6 @@ ejectitem() {
    echo "   </action>"
    echo "  </item>"
 }
-ismountedsys() {
-   # $1 = devinfo
-   local dm mnt
-   mnt="$(getinfo "$1" $DINF_MPATH)"
-   for dm in / /boot /home /tmp /usr /var; do
-      [[ "$mnt" == "$dm" ]]  && return 0
-   done
-   return 1
-}
 devi2menu() {
    # $1 = devinfo
    local cmd fmn fm title cdir x
@@ -253,7 +244,7 @@ devsmenu() {
    fi
 }
 splitdevs() {
-   local dev dtype dinf
+   local dev dtype dinf mnt dm nosys=1
    for dev in /dev/{sr[0-9],disk/by-uuid/*}; do
       dinf="$(makeinfo "$dev")"
       if [ -n "$dinf" ]; then
@@ -264,8 +255,14 @@ splitdevs() {
             $DTYPE_USB)
                USBTAB[${#USBTAB[@]}]="$dinf" ;;
             $DTYPE_PART)
-               if [ $MOUNTPART == 1 ] && ( ! ismountedsys "$dinf" ); then
-                  PARTAB[${#PARTAB[@]}]="$dinf"
+               if [ $MOUNTPART -eq 1 ]; then
+                  mnt="$(getinfo "$dinf" $DINF_MPATH)"
+                  if [ -n "$mnt" ]; then
+                     for dm in / /boot /home /tmp /usr /var; do
+                        [[ "$mnt" == "$dm" ]]  && { nosys=0; break; }
+                     done
+                  fi
+                  [ $nosys -eq 1 ] && PARTAB[${#PARTAB[@]}]="$dinf"
                fi ;;
          esac
       fi
