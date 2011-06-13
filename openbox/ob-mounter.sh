@@ -20,7 +20,8 @@ FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
 # --- some configs -----------------------------------------
 UDISKS=$(type -p udisks)
 NOTIFY=$(type -p notify-send)
-MOUNTPART=1
+SHOWPARTS=1
+SHOWSYSPARTS=0
 USEUDISKS=1
 # ----------------------------------------------------------
 
@@ -85,7 +86,7 @@ ejecter() {
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
       tab=("udisks --detach" "udisks --eject")
    else
-      if  [ -n "$UDISK" ]; then
+      if  [[ -n "$UDISK" ]]; then
          tab[$DTYPE_USB]="udisks --detach"
       fi
    fi
@@ -116,11 +117,11 @@ ejectableusb() {
    # $1 = devinfo usb
    local ejdev ejdevp ejdevm dev noeject=0
    ejdevp="$(getinfo "$1" $DINF_DEV)" ; ejdev="${ejdevp/[1-9]/}"
-   if [ "$ejdev" != "$ejdevp" ]; then
+   if [[ "$ejdev" != "$ejdevp" ]]; then
       for dev in "${USBTAB[@]}"; do
-         if [ -n "$(getinfo "$dev" $DINF_MPATH)" ]; then
+         if [[ -n "$(getinfo "$dev" $DINF_MPATH)" ]]; then
             ejdevm="$(getinfo "$dev" $DINF_DEV)"
-            if [ "$ejdev" == "${ejdevm/[1-9]/}" ]; then
+            if [[ "$ejdev" == "${ejdevm/[1-9]/}" ]]; then
                noeject=1 ; break
             fi
          fi
@@ -139,7 +140,7 @@ mountitem() {
 umountitem() {
    # $1 = devinfo
    local cmd="$(umounter "$1")"
-   if [ -n "$NOTIFY" ]; then
+   if [[ -n "$NOTIFY" ]]; then
       cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
    fi
    echo "  <item label=\"$UMOUNTMSG\">"
@@ -152,11 +153,11 @@ ejectitem() {
    # $1 = devinfo
    local medi="$(getinfo "$1" $DINF_DEV)"
    local cmd dtype=$(getinfo "$1" $DINF_TYPE)
-   if [ $dtype == $DTYPE_USB ]; then
+   if [[ $dtype == $DTYPE_USB ]]; then
       medi="${medi/[1-9]/}"
    fi
    cmd="$(ejecter "$medi" $dtype)"
-   if [ -n "$NOTIFY" ]; then
+   if [[ -n "$NOTIFY" ]]; then
       cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$dtype]}\" \"$(getinfo "$1" $DINF_LABEL):  $EJECTEDMSG.\"'"
    fi
    echo "  <item label=\"$EJECTMSG\">"
@@ -170,29 +171,29 @@ devi2menu() {
    local cmd fmn fm title cdir x
    local l=${#FILEMANS[@]} dtype=$(getinfo "$1" $DINF_TYPE)
    local lab="$(getinfo "$1" $DINF_LABEL)"
-   [ "${lab/__/}" ==  "$lab" ] && title="${lab//_/__}" || title="$lab"
+   [[ "${lab/__/}" ==  "$lab" ]] && title="${lab//_/__}" || title="$lab"
    local mntpath="$(getinfo "$1" $DINF_MPATH)"
-   [ -n "$mntpath" ] && title="[${title}]"
+   [[ -n "$mntpath" ]] && title="[${title}]"
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
    echo "  <separator label=\"${DTYPETAB[$dtype]}: $lab\"/>"
    for (( x=0 ; $x < $l ; x++ )); do
       cdir=0 ; fm="${FILEMANS[$x]}" ; fmn="$fm"
-      if [ "${fm}" != "${fm/*,/}" ]; then
+      if [[ "${fm}" != "${fm/*,/}" ]]; then
          fmn="${fm/*,/}" ; fm="${fm/,*/}"
       fi
-      if [ "${fm:0:1}" == ":" ]; then
+      if [[ "${fm:0:1}" == ":" ]]; then
          fm="${fm:1}" ; fmn="${fmn:1}" ; cdir=1
       fi
       echo "  <item label=\"$OPWITHMSG $fmn\">"
-      if [ -z "$mntpath" ]; then
+      if [[ -z "$mntpath" ]]; then
          cmd="sh -c '$(mounter "$1") &amp;&amp; "
-         if [ $cdir == 1 ]; then
+         if [[ $cdir == 1 ]]; then
             cmd+="cd \"/media/$lab\" &amp;&amp; exec $fm'"
          else
             cmd+="exec $fm \"/media/$lab\"'"
          fi
       else
-         if [ $cdir == 1 ]; then
+         if [[ $cdir == 1 ]]; then
             cmd="sh -c 'cd \"/media/$lab\" &amp;&amp; exec $fm'"
          else
             cmd="$fm \"$mntpath\""
@@ -204,13 +205,13 @@ devi2menu() {
       echo "  </item>"
    done
    echo "  <separator/>"
-   if [ -n "$mntpath" ]; then
+   if [[ -n "$mntpath" ]]; then
       umountitem "$1"
    else
       mountitem "$1"
-      if [ $dtype == $DTYPE_CDROM ]; then
+      if [[ $dtype == $DTYPE_CDROM ]]; then
          ejectitem "$1"
-      elif [ $dtype == $DTYPE_USB ]; then
+      elif [[ $dtype == $DTYPE_USB ]]; then
          if ( ejectableusb "$1" ); then
             ejectitem "$1"
          fi
@@ -221,22 +222,22 @@ devi2menu() {
 devsmenu() {
    local numofdevs devi
    (( numofdevs=${#USBTAB[@]}+${#CDTAB[@]}+${#PARTAB[@]} ))
-   if [ $numofdevs == 0 ];  then
+   if [[ $numofdevs == 0 ]];  then
       echo "<separator label=\"ob-pmount\"/>"
    fi
-   if [ ${#USBTAB[@]} != 0 ]; then
+   if [[ ${#USBTAB[@]} != 0 ]]; then
       echo " <separator label=\"usb\"/>"
       for devi in "${USBTAB[@]}"; do
           devi2menu "$devi" $DTYPE_USB
       done
    fi
-   if [ ${#CDTAB[@]} != 0 ]; then
+   if [[ ${#CDTAB[@]} != 0 ]]; then
       echo " <separator label=\"cdrom\"/>"
       for devi in "${CDTAB[@]}"; do
           devi2menu "$devi" $DTYPE_CDROM
       done
    fi
-   if [ ${#PARTAB[@]} != 0 ]; then
+   if [[ ${#PARTAB[@]} != 0 ]]; then
       echo " <separator label=\"$PARTMSG\"/>"
       for devi in "${PARTAB[@]}"; do
           devi2menu "$devi" $DTYPE_PART
@@ -244,10 +245,10 @@ devsmenu() {
    fi
 }
 splitdevs() {
-   local dev dtype dinf mnt dm nosys
+   local dev dtype dinf mnt dm itsys
    for dev in /dev/{sr[0-9],disk/by-uuid/*}; do
       dinf="$(makeinfo "$dev")"
-      if [ -n "$dinf" ]; then
+      if [[ -n "$dinf" ]]; then
          dtype="$(getinfo "$dinf" "$DINF_TYPE")"
          case $dtype in
             $DTYPE_CDROM)
@@ -255,14 +256,14 @@ splitdevs() {
             $DTYPE_USB)
                USBTAB[${#USBTAB[@]}]="$dinf" ;;
             $DTYPE_PART)
-               if [ $MOUNTPART -eq 1 ]; then
-                  mnt="$(getinfo "$dinf" $DINF_MPATH)" ; nosys=1
-                  if [ -n "$mnt" ]; then
+               if [[ $SHOWPARTS -eq 1 ]]; then
+                  mnt="$(getinfo "$dinf" $DINF_MPATH)" ; itsys=0
+                  if [[ -n "$mnt" ]]; then
                      for dm in / /boot /home /tmp /usr /var; do
-                        [ "$mnt" == "$dm" ] && { nosys=0; break; }
+                        [[ "$mnt" == "$dm" ]] && { itsys=1; break; }
                      done
                   fi
-                  [ $nosys -eq 1 ] && PARTAB[${#PARTAB[@]}]="$dinf"
+                  [[ $itsys -eq 0 || $SHOWSYSPARTS -eq 1 ]] && PARTAB[${#PARTAB[@]}]="$dinf"
                fi ;;
          esac
       fi
