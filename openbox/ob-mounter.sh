@@ -119,8 +119,7 @@ makeinfo() {
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
-   local IFS=":"
-   local tab=($1)
+   local IFS=":" ; local tab=($1)
    echo "${tab[$2]}"
 }
 ejectableusb() {
@@ -131,9 +130,7 @@ ejectableusb() {
       for dev in "${USBTAB[@]}"; do
          if [[ -n "$(getinfo "$dev" $DINF_MPATH)" ]]; then
             ejdevm="$(getinfo "$dev" $DINF_DEV)"
-            if [[ "$ejdev" == "${ejdevm/[1-9]/}" ]]; then
-               noeject=1 ; break
-            fi
+            [[ "$ejdev" == "${ejdevm/[1-9]/}" ]] && { noeject=1 ; break; }
          fi
       done
    fi
@@ -214,16 +211,16 @@ devi2menu() {
       echo "   </action>"
       echo "  </item>"
    done
-   echo "  <separator/>"
-   if [[ -n "$mntpath" ]]; then
-      umountitem "$1"
-   else
-      mountitem "$1"
-      if [[ $dtype == $DTYPE_CDROM ]]; then
-         ejectitem "$1"
-      elif [[ $dtype == $DTYPE_USB ]]; then
-         if ( ejectableusb "$1" ); then
+   if [[ $(getinfo "$1" $DINF_SYS) -eq 0 ]]; then
+      echo "  <separator/>"
+      if [[ -n "$mntpath" ]]; then
+         umountitem "$1"
+      else
+         mountitem "$1"
+         if [[ $dtype == $DTYPE_CDROM ]]; then
             ejectitem "$1"
+         elif [[ $dtype == $DTYPE_USB ]]; then
+            ejectableusb "$1" && ejectitem "$1"
          fi
       fi
    fi
