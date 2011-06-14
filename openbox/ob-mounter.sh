@@ -56,7 +56,7 @@ declare -a USBTAB CDTAB PARTAB
 
 # --- constans ---
 declare -r DTYPE_USB=0 DTYPE_CDROM=1 DTYPE_PART=2
-declare -r DINF_TYPE=0 DINF_LABEL=1 DINF_DEV=2 DINF_MPATH=3
+declare -r DINF_TYPE=0 DINF_LABEL=1 DINF_DEV=2 DINF_MPATH=3 DINF_SYS=4
 declare -r ICONTAB=(drive-removable-media drive-cdrom drive-harddisk)
 declare -r DTYPETAB=(usb cdrom $PARTMSG)
 
@@ -94,7 +94,7 @@ ejecter() {
 }
 makeinfo() {
    # $1 = dev
-   local medi typ=$DTYPE_PART lab dev mnt
+   local medi typ=$DTYPE_PART lab dev mnt dm sys=0
    medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
       -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
    lab="${medi/*LABEL_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && {
@@ -105,7 +105,17 @@ makeinfo() {
    [[ "${medi}" != "${medi/=usb/}" ]] && typ=$DTYPE_USB
    [[ "${medi}" != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
    [[ "${medi}" != "${medi/=swap/}" ]] && return
-   echo -e "${typ}:${lab[0]}:${dev[0]}:${mnt}:"
+   if [[ $typ -eq $DTYPE_PART ]]; then
+      [[ $SHOWPARTS -ne 1 ]] && return
+      if [[ -n "$mnt" ]]; then
+         for dm in / /boot /home /tmp /usr /var; do
+            [[ "$mnt" == "$dm" ]] && {
+               [[ $SHOWSYSPARTS -ne 1 ]] && return
+               sys=1; break; }
+         done
+      fi
+   fi
+   echo -e "${typ}:${lab[0]}:${dev[0]}:${mnt}:${sys}"
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
@@ -245,7 +255,7 @@ devsmenu() {
    fi
 }
 splitdevs() {
-   local dev dtype dinf mnt dm itsys
+   local dev dtype dinf
    for dev in /dev/{sr[0-9],disk/by-uuid/*}; do
       dinf="$(makeinfo "$dev")"
       if [[ -n "$dinf" ]]; then
@@ -256,15 +266,7 @@ splitdevs() {
             $DTYPE_USB)
                USBTAB[${#USBTAB[@]}]="$dinf" ;;
             $DTYPE_PART)
-               if [[ $SHOWPARTS -eq 1 ]]; then
-                  mnt="$(getinfo "$dinf" $DINF_MPATH)" ; itsys=0
-                  if [[ -n "$mnt" ]]; then
-                     for dm in / /boot /home /tmp /usr /var; do
-                        [[ "$mnt" == "$dm" ]] && { itsys=1; break; }
-                     done
-                  fi
-                  [[ $itsys -eq 0 || $SHOWSYSPARTS -eq 1 ]] && PARTAB[${#PARTAB[@]}]="$dinf"
-               fi ;;
+               PARTAB[${#PARTAB[@]}]="$dinf" ;;
          esac
       fi
    done
