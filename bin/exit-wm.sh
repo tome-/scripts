@@ -4,7 +4,7 @@
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
 # Required: grep,procps(pkill)
-# Required: zenity or Xdialog or xterm+dialog+cat
+# Required: zenity or Xdialog or xterm+dialog
 # Required: consolekit+dbus or sudo
 
 
@@ -83,7 +83,7 @@ elif [ -n "$XDIALOG" ]; then
 else
   export MESG LOGO REST HALT
   xterm -T "$NAME" -g 43x10 -e 'echo $(dialog --no-shadow --stdout --radiolist "$MESG" 10 43 9 "$LOGO" "" ON "$REST" "" OFF "$HALT" "" OFF) >/dev/shm/exit-wm.cmd'
-  OPTIO="$(cat /dev/shm/exit-wm.cmd)"
+  OPTIO="$(</dev/shm/exit-wm.cmd)"
   rm -f /dev/shm/exit-wm.cmd
 fi
 
