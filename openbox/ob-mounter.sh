@@ -115,7 +115,7 @@ makeinfo() {
          done
       fi
    fi
-   echo -e "${typ}:${lab[0]}:${dev[0]}:${mnt}:${sys}"
+   echo "${typ}:$(echo -e ${lab[0]}):${dev[0]}:${mnt}:${sys}"
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
@@ -201,7 +201,7 @@ devi2menu() {
          fi
       else
          if [[ $cdir == 1 ]]; then
-            cmd="sh -c 'cd \"/media/$lab\" &amp;&amp; exec $fm'"
+            cmd="sh -c 'cd \"$mntpath\" &amp;&amp; exec $fm'"
          else
             cmd="$fm \"$mntpath\""
          fi
