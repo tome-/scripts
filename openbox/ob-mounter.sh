@@ -101,7 +101,7 @@ makeinfo() {
       lab="${medi/*UUID_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && return ; }
    lab=(${lab}) ; dev=(${medi/*DEVNAME=/})
    mnt=($(grep -w -e "${dev[0]}" -e "/dev/disk/by-label/${lab[0]}" /etc/mtab))
-   [[ ${#mnt[@]} == 6 ]] && mnt="${mnt[1]}" || mnt=""
+   [[ ${#mnt[@]} != 6 ]] && mnt="" || mnt="${mnt[1]/\\040/ }"
    [[ "${medi}" != "${medi/=usb/}" ]] && typ=$DTYPE_USB
    [[ "${medi}" != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
    [[ "${medi}" != "${medi/=swap/}" ]] && return
@@ -115,7 +115,7 @@ makeinfo() {
          done
       fi
    fi
-   echo "${typ}:$(echo -e ${lab[0]}):${dev[0]}:${mnt}:${sys}"
+   echo -e "${typ}:${lab[0]}:${dev[0]}:${mnt}:${sys}"
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
