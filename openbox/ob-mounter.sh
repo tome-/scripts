@@ -101,7 +101,7 @@ makeinfo() {
       lab="${medi/*UUID_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && return ; }
    lab=(${lab}) ; dev=(${medi/*DEVNAME=/})
    mnt=($(grep -w -e "${dev[0]}" -e "/dev/disk/by-label/${lab[0]}" /etc/mtab))
-   [[ ${#mnt[@]} != 6 ]] && mnt="" || mnt="${mnt[1]/\\040/ }"
+   [[ ${#mnt[@]} != 6 ]] && mnt="" || mnt="${mnt[1]//\\040/ }"
    [[ "${medi}" != "${medi/=usb/}" ]] && typ=$DTYPE_USB
    [[ "${medi}" != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
    [[ "${medi}" != "${medi/=swap/}" ]] && return
