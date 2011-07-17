@@ -113,7 +113,14 @@ class Todivx:
       if self.opts.scale:
          vfilter += "scale=" + self.opts.scale + ","
       if self.opts.band:
-         vfilter += "expand=0:0:0:0:0:" + self.opts.band + ":2,softskip,"
+         vfilter += "expand="
+         if self.opts.scale:
+            sctab = self.opts.scale.split(":")
+            vfilter += sctab[0] + ":" if int(sctab[0]) > 0 else "0:"
+            vfilter += sctab[1] if int(sctab[1]) > 0 else "0"
+         else:
+            vfilter += "0:0"
+         vfilter += ":0:0:0:" + self.opts.band + ":2,softskip,"
       if self.opts.fps:
          extra += " -ofps " + str(self.opts.fps)
          vfilter += "framestep=1,filmdint=dint_thres=256,harddup,"

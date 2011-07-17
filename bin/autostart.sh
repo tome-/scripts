@@ -5,6 +5,8 @@
 # License:  GNU GPL v3
 # Required: bashv4,grep
 
+shopt -s nullglob
+
 
 usage() {
    echo "USAGE: [-r] <desktop name>"
@@ -25,11 +27,9 @@ DESK="$1"
 declare -A tab
 
 for app in /etc/xdg/autostart/*.desktop; do
-   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break
    tab[${app##*/}]="$app"
 done
 for app in ~/.config/autostart/*.desktop; do
-   [ "$app" == "/etc/xdg/autostart/\*.desktop" ] && break
    tab[${app##*/}]="$app"
 done
 
