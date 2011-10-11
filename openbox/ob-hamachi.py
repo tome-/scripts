@@ -68,7 +68,7 @@ class hamachi():
                self.out += '   <separator label="%s%s"/>\n' % (clname,clip)
                self.out += '   <separator label="ID: %s"/>\n' % clid
                self.genActionItem('Ping','xterm -T "Pinging: %s" -g 60x18 -e "ping -w 10 -c 10 %s;echo -en \'\\n:::Hit ENTER:::\';read"' \
-                     % (clname.split()[0],clip),'  ')
+                     % (clname.split()[0] if len(clname) else '',clip),'  ')
                if clstat != "" and clstat[0] != "x":
                   self.out += '  <separator/>\n'
                   self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')

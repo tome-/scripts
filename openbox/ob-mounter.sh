@@ -182,7 +182,7 @@ devi2menu() {
    local mntpath="$(getinfo "$1" $DINF_MPATH)"
    [[ -n "$mntpath" ]] && title="[${title}]"
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
-   echo "  <separator label=\"${DTYPETAB[$dtype]}: $lab\"/>"
+   echo "  <separator label=\"$(getinfo "$1" $DINF_DEV): $lab\"/>"
    for (( x=0 ; $x < $l ; x++ )); do
       cdir=0 ; fm="${FILEMANS[$x]}" ; fmn="$fm"
       if [[ "${fm}" != "${fm/*,/}" ]]; then
