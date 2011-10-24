@@ -37,7 +37,11 @@ main() {
    local f OBHOME="$XDG_CONFIG_HOME/openbox"
    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
    echo "<openbox_pipe_menu>"
-   item "$OBHOME/autostart.sh"
+   if [ -f "$OBHOME/autostart" ]; then
+      item "$OBHOME/autostart"
+   else
+      item "$OBHOME/autostart.sh"
+   fi
    item "$OBHOME/menu.xml"
    item "$OBHOME/rc.xml"
    if [ -d "$OBHOME/scripts" ]; then

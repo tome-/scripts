@@ -37,7 +37,8 @@ for app in ${tab[@]}; do
    if ( ! grep -iq "hidden=true" "$app" ); then
       auto="$(grep -wi "onlyshowin=.*$DESK" "$app")"
       if [ -z "$auto" ]; then
-         grep -wiq "notshowin=.*$DESK" "$app" || auto=1
+         grep -wiq "onlyshowin=" "$app" || \
+            (grep -wiq "notshowin=.*$DESK" "$app" || auto=1)
       fi
       if [ -n "$auto" ]; then
          cmd="$(grep -i 'exec=' "$app")"
