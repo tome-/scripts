@@ -20,6 +20,8 @@ FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
 # --- some configs -----------------------------------------
 UDISKS=$(type -p udisks)
 NOTIFY=$(type -p notify-send)
+NICON="/usr/share/icons/gnome/32x32/devices/"
+NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
 USEUDISKS=1
@@ -57,8 +59,8 @@ declare -a USBTAB CDTAB PARTAB
 # --- constans ---
 declare -r DTYPE_USB=0 DTYPE_CDROM=1 DTYPE_PART=2
 declare -r DINF_TYPE=0 DINF_LABEL=1 DINF_DEV=2 DINF_MPATH=3 DINF_SYS=4
-declare -r ICONTAB=(drive-removable-media drive-cdrom drive-harddisk)
 declare -r DTYPETAB=(usb cdrom $PARTMSG)
+declare -r ICONTAB=(${NICON}drive-removable-media${NISUFF} ${NICON}drive-cdrom${NISUFF} ${NICON}drive-harddisk${NISUFF})
 
 
 
