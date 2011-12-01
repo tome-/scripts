@@ -101,10 +101,12 @@ pkgdef="package='${pkgname[0]}-${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
 
 if [ -n "$BUILDSHM" ]; then
    [ -d src ] && rm -fr src
-   BUILDSHM="/dev/shm/${pkgname[0]}-${NAME}-src"
+   [ -d pkg ] && rm -fr pkg
+   BUILDSHM="/dev/shm/${NAME}-${pkgname[0]}"
    [ -d "$BUILDSHM" ] && rm -fr "$BUILDSHM"
    mkdir -p "$BUILDSHM"
-   ln -s "$BUILDSHM" src
+   ln -s "${BUILDSHM}/src" src
+   ln -s "${BUILDSHM}/pkg" pkg
 fi
 
 
@@ -156,7 +158,6 @@ fi
 
 
 [ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
-[ -h src ] && rm -f src
 [ -d src ] && rm -fr src
 [ -d pkg ] && rm -fr pkg
 
