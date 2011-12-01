@@ -102,9 +102,10 @@ pkgdef="package='${pkgname[0]}-${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
 if [ -n "$BUILDSHM" ]; then
    [ -d src ] && rm -fr src
    #[ -d pkg ] && rm -fr pkg
-   BUILDSHM="/dev/shm/${NAME}-${pkgname[0]}"
+   USERSHM="/dev/shm/${USER}"
+   BUILDSHM="${USERSHM}/${NAME}-${pkgname[0]}"
    [ -d "$BUILDSHM" ] && rm -fr "$BUILDSHM"
-   mkdir -p "${BUILDSHM}"/{src,pkg}
+   install -dm700 "${BUILDSHM}"/{src,pkg}
    ln -s "${BUILDSHM}/src" src
    #ln -s "${BUILDSHM}/pkg" pkg
 fi
@@ -159,6 +160,10 @@ fi
 
 [ -d src ] && rm -fr src
 [ -d pkg ] && rm -fr pkg
-[ -n "$BUILDSHM" ] && rm -fr "$BUILDSHM"
+
+if [ -n "$BUILDSHM" ]; then
+   rm -fr "$BUILDSHM"
+   rmdir &>/dev/null "$USERSHM"
+fi
 
 
