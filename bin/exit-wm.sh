@@ -3,7 +3,7 @@
 # About:    simple "logout" gui for wms
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
-# Required: grep,procps(pkill)
+# Required: grep,procps(pidof,pkill)
 # Required: zenity or Xdialog or xterm+dialog
 # Required: consolekit+dbus or sudo
 
@@ -32,6 +32,10 @@ case ${LANG%.*} in
 esac
 
 
+WMTAB=("openbox:openbox --exit")
+
+
+
 NAME="${0##*/}"
 
 ZENITY="$(type -p zenity)"
@@ -48,7 +52,14 @@ fi
 
 
 killwm() {
-  pkill -SIGKILL -u $USER
+   local len=${#WMTAB[@]} wm=() oi="$IFS" IFS
+  while [ $len -gt 0 ]; do
+    let len-=1
+    IFS=":" wm=(${WMTAB[$len]}) && IFS="$oi"
+    [ -n "$(pidof ${wm[0]})" ] && break
+  done
+  [ -n "${wm[1]}" ] && ${wm[1]} || pkill ${wm[0]}
+  #pkill -SIGKILL -u $USER
 }
 
 
