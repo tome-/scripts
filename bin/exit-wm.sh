@@ -52,7 +52,7 @@ fi
 
 
 killwm() {
-   local len=${#WMTAB[@]} wm=() oi="$IFS" IFS
+  local len=${#WMTAB[@]} wm=() oi="$IFS" IFS
   while [ $len -gt 0 ]; do
     let len-=1
     IFS=":" wm=(${WMTAB[$len]}) && IFS="$oi"

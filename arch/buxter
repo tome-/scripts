@@ -19,13 +19,15 @@ case ${LANG%_*} in
       MSG_TR="uruchom w xterm"
       MSG_DG="nie wykonuj, pokaż linie komend"
       MSG_SH="buduj w /dev/shm"
-      MSG_SR="generuj archiwum źródłowe"
+      MSG_SR="pytaj, czy generować archiwum źródłowe"
       MSG_HE="ten tekst"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie"
       ANS_EX="t"
       MSG_32="Budować pakiet 32 bitowy"
       ANS_32="t"
       MSG_CC="Budować z ccache"
+      MSG_SO="Budować archiwum źródłowe"
+      ANS_SO="t"
       ANS_TB=(t n)
       MSG_Yn="[T/n]"
       MSG_yN="[t/N]"
@@ -35,20 +37,25 @@ case ${LANG%_*} in
       MSG_TR="exec in xterm"
       MSG_DG="don't exec, show cmd line"
       MSG_SH="build in /dev/shm"
-      MSG_SR="generate a source-only tarball"
+      MSG_SR="ask to generate a source-only tarball"
       MSG_HE="this message"
       MSG_EX="Package already exists. Build again"
       ANS_EX="y"
       MSG_32="Build 32 bit package"
       ANS_32="y"
       MSG_CC="Build with ccache"
+      MSG_SO="Build source-only tarball"
+      ANS_SO="y"
       ANS_TB=(y n)
       MSG_Yn="[Y/n]"
       MSG_yN="[y/N]"
    ;;
 esac
-MSG_EX="${MSG_EX} ? ${MSG_yN}"
-MSG_32="${MSG_32} ? ${MSG_yN}"
+
+MSG_EX="${BLDRED}==>${BLDWHI} ${MSG_EX} ? ${MSG_yN} ${TXTRES}"
+MSG_32="${BLDYEL}==>${BLDWHI} ${MSG_32} ? ${MSG_yN} ${TXTRES}"
+MSG_SO="${BLDYEL}==>${BLDWHI} ${MSG_SO} ? ${MSG_yN} ${TXTRES}"
+MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
 
 
 
@@ -113,8 +120,8 @@ fi
 
 if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
-      pkgdef="${pkgdef} ; echo -en '${BLDYEL}==> ${BLDWHI}${MSG_32} ${TXTRES}' ; \
-         read res32 ; [ \"\${res32,,}\" == '$ANS_32' ] && bit32='linux32 ' && \
+      pkgdef="${pkgdef} ; echo -en '${MSG_32}' ; read res32 ; \
+         [ \"\${res32,,}\" == '$ANS_32' ] && bit32='linux32 ' && \
          package='${pkgname}-${pkgver}-${pkgrel}-i686${PKGEXT}'"
    fi
 fi
@@ -125,14 +132,13 @@ if [ "$archpkg" != "any" ]; then
          if [ -z "$CCACHE_DISABLE" ]; then
             ccvar='&& export CCACHE_DISABLE=1 || unset CCACHE_DISABLE'
             anscc="${ANS_TB[$ANNOP]}"
-            MSG_CC="${MSG_CC} ? ${MSG_Yn}"
+            MSG_CC="${MSG_CC} ${MSG_Yn} ${TXTRES}"
          else
             ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1'
             anscc="${ANS_TB[$ANYES]}"
-            MSG_CC="${MSG_CC} ? ${MSG_yN}"
+            MSG_CC="${MSG_CC} ${MSG_yN} ${TXTRES}"
          fi
-         cmd="${cmd}echo -en '${BLDYEL}==> ${BLDWHI}${MSG_CC} ${TXTRES}' ; \
-               read cres ; [ \"\${cres,,}\" == '$anscc' ] $ccvar ;"
+         cmd="${cmd}echo -en '${MSG_CC}' ; read cres ; [ \"\${cres,,}\" == '$anscc' ] $ccvar ;"
          break
       fi
    done
@@ -140,12 +146,12 @@ fi
 
 
 cmd="echo ; ${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
-   echo -ne '${BLDRED}==> ${BLDWHI}${MSG_EX} ${TXTRES}' ; read bres ; \
-   [ \"\${bres,,}\" == '$ANS_EX' ] && (${cmd} echo ; \${bit32}makepkg -fs) ; else (${cmd} echo ; \${bit32}makepkg -s) ; fi"
+   echo -ne '${MSG_EX}' ; read bres ; [ \"\${bres,,}\" == '$ANS_EX' ] && \
+      (${cmd} echo ; \${bit32}makepkg -fs) ; else (${cmd} echo ; \${bit32}makepkg -s) ; fi"
 
 
 if [ -n "$GENSOURCE" ]; then
-   cmd="${cmd} ; echo ; makepkg --source -f"
+   cmd="${cmd} ; echo ; echo -en '${MSG_SO}' ; read sres ; [ \"\${sres,,}\" == '$ANS_SO' ] && makepkg --source -f"
 fi
 
 
