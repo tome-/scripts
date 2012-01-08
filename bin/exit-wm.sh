@@ -58,32 +58,34 @@ killwm() {
     IFS=":" wm=(${WMTAB[$len]}) && IFS="$oi"
     [ -n "$(pidof ${wm[0]})" ] && break
   done
-  [ -n "${wm[1]}" ] && ${wm[1]} || pkill ${wm[0]}
-  #pkill -SIGKILL -u $USER
+  [ -n "${wm[1]}" ] && ${wm[1]} || pkill -SIGKILL ${wm[0]}
+}
+
+
+kill4user() {
+  [ "$USER" != "root" ] && pkill -SIGKILL -u $USER
 }
 
 
 haltsys() {
-  sleep 0.5
+  (sleep 0.5 && kill4user)&
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || {
     if [ "$(sudo -n -l shutdown -h now)" != "" ]; then
       sudo shutdown -h now
     fi
   }
-  killwm
 }
 
 
 rebootsys() {
-  sleep 0.5
+  (sleep 0.5 && kill4user)&
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || {
     if [ "$(sudo -n -l shutdown -r now)" != "" ]; then
       sudo shutdown -r now
     fi
   }
-  killwm
 }
 
 
