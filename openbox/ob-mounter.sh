@@ -117,7 +117,7 @@ makeinfo() {
          done
       fi
    fi
-   echo -e "${typ}:${lab[0]}:${dev[0]}:${mnt}:${sys}"
+   echo -e "${typ}:${lab[0]}:/dev/${dev[0]##*/}:${mnt}:${sys}"
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
