@@ -25,6 +25,7 @@ NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
 USEUDISKS=1
+PARTLETTER=
 # ----------------------------------------------------------
 
 
@@ -108,7 +109,6 @@ makeinfo() {
    [[ "${medi}" != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
    [[ "${medi}" != "${medi/=swap/}" ]] && return
    if [[ $typ -eq $DTYPE_PART ]]; then
-      [[ $SHOWPARTS -ne 1 ]] && return
       if [[ -n "$mnt" ]]; then
          for dm in / /boot /home /tmp /usr /var; do
             [[ "$mnt" == "$dm" ]] && {
@@ -229,7 +229,7 @@ devi2menu() {
    echo " </menu>"
 }
 devsmenu() {
-   local numofdevs devi
+   local numofdevs devi da
    (( numofdevs=${#USBTAB[@]}+${#CDTAB[@]}+${#PARTAB[@]} ))
    if [[ $numofdevs == 0 ]];  then
       echo "<separator label=\"ob-pmount\"/>"
@@ -249,13 +249,17 @@ devsmenu() {
    if [[ ${#PARTAB[@]} != 0 ]]; then
       echo " <separator label=\"$PARTMSG\"/>"
       for devi in "${PARTAB[@]}"; do
-          devi2menu "$devi" $DTYPE_PART
+         da=$(getinfo "$devi" $DINF_DEV) ; da=${da:7:1}
+         [[ -n "$PARTLETTER" && "$da" != "$PARTLETTER" ]] && \
+            echo " <separator/>"
+         PARTLETTER="$da"
+         devi2menu "$devi" $DTYPE_PART
       done
    fi
 }
 splitdevs() {
    local dev dtype dinf
-   for dev in /dev/{sr[0-9],disk/by-uuid/*}; do
+   for dev in /dev/sr[0-9] /dev/sd[a-z][1-9]{,[0-9]}; do
       dinf="$(makeinfo "$dev")"
       if [[ -n "$dinf" ]]; then
          dtype="$(getinfo "$dinf" "$DINF_TYPE")"
@@ -265,6 +269,7 @@ splitdevs() {
             $DTYPE_USB)
                USBTAB[${#USBTAB[@]}]="$dinf" ;;
             $DTYPE_PART)
+               [[ ${SHOWPARTS} -eq 1 ]] && \
                PARTAB[${#PARTAB[@]}]="$dinf" ;;
          esac
       fi
