@@ -68,27 +68,28 @@ class hamachi():
                self.out += '   <separator label="%s%s"/>\n' % (clname,clip)
                self.out += '   <separator label="ID: %s"/>\n' % clid
                self.genActionItem('Ping','xterm -T "Pinging: %s" -g 60x18 -e "ping -w 10 -c 10 %s;echo -en \'\\n:::Hit ENTER:::\';read"' \
-                     % (clname.split()[0] if len(clname) else '',clip),'  ')
+                     % (clname.split()[0] if len(clname) else '',clip),2)
+               self.genActionItem('Copy IP','sh -c "echo %s | xclip -selection clipboard"' % (clip),2)
                if clstat != "" and clstat[0] != "x":
                   self.out += '  <separator/>\n'
-                  self.genActionItem('SSH','xterm -e "ssh %s"' % clip,'  ')
-                  self.genActionItem('SSH - X','xterm -e "ssh -Y %s"' % clip,'  ')
+                  self.genActionItem('SSH','xterm -e "ssh %s"' % clip,2)
+                  self.genActionItem('SSH - X','xterm -e "ssh -Y %s"' % clip,2)
                self.out += '  </menu>\n'
          if len(netstat) > 0 and netstat[0] == "*":
             self.out += '  <separator/>\n'
-            self.genActionItem('Offline','hamachi go-offline %s' % netname,' ')
+            self.genActionItem('Offline','hamachi go-offline %s' % netname,1)
          else:
             self.out += '  <separator/>\n'
-            self.genActionItem('Online','hamachi go-online %s' % netname,' ')
+            self.genActionItem('Online','hamachi go-online %s' % netname,1)
          self.out += ' </menu>\n'
       return self.numnets
 
-   def genActionItem(self,name,cmd,space=''):
-      self.out += space + ' <item label="%s">\n' % name
-      self.out += space + '  <action name="Execute">\n'
-      self.out += space + '   <execute>%s</execute>\n' % cmd
-      self.out += space + '  </action>\n'
-      self.out += space + ' </item>\n'
+   def genActionItem(self,name,cmd,space=0):
+      self.out += ' '*space + ' <item label="%s">\n' % name
+      self.out += ' '*space + '  <action name="Execute">\n'
+      self.out += ' '*space + '   <execute>%s</execute>\n' % cmd
+      self.out += ' '*space + '  </action>\n'
+      self.out += ' '*space + ' </item>\n'
 
    def genStatus(self):
       result = None

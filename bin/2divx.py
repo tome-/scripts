@@ -21,6 +21,7 @@ class Todivx:
             "fps":"ustaw ilość klatek na sek dla wideo","mbd":"algorytm mbd: 0, 1 lub 2 (domyślnie: 2)",
             "freq":"częstotliwość dla strumienia audio (domyślnie: 44100)",
             "subt":"dodaj napisy ('auto' = taka sama nazwa jak wideo)",
+            "subscl":"skalowania czcionki napisów (domyślnie: 4)",
             "vol":"zmiana głośności (od -200dB do 60dB, domyślnie: 0dB)",
             "trell":"ustaw optymalną quanizację","xvid":"tryb xvid","nskip":"nie opuszczaj ramek",
             "threads":"używaj wielu wątków od 1 do 8 (domyślnie: 1 )",
@@ -37,6 +38,7 @@ class Todivx:
             "fps":"set fps for video (default: ignore)","mbd":"mbd algoritm: 0, 1 or 2 (default: 2)",
             "freq":"output audio frequency (default: 44100)",
             "subt":"add subtitle ('auto' = the same name as video)",
+            "subscl":"subtitle font scale (default: 4)",
             "vol":"change volume (from -200dB to 60dB, default: 0dB)",
             "trell":"setup optimal quantization","xvid":"xvid mode","nskip":"no skip frame",
             "threads":"use threads from 1 to 8 (default: 1)",
@@ -57,6 +59,7 @@ class Todivx:
       self.parser.add_option("-m","--mbd",type="int",default=2,help=self.msgtab["mbd"])
       self.parser.add_option("-r","--freq",type="int",default=44100,help=self.msgtab["freq"])
       self.parser.add_option("-i","--sub",type="string",default=None,help=self.msgtab["subt"])
+      self.parser.add_option("-j","--subscale",type="int",default=4,help=self.msgtab["subscl"])
       self.parser.add_option("-u","--vol",type="int",default=0,help=self.msgtab["vol"])
       self.parser.add_option("-d","--threads",type="int",default=1,help=self.msgtab["threads"])
       self.parser.add_option("-t","--trell",action="store_true",help=self.msgtab["trell"])
@@ -104,7 +107,7 @@ class Todivx:
                if exists(sub+x):
                   sub += x ; break
             else:  sub = ""
-         extra += " -fontconfig -subfont-text-scale 4 -subpos 100 -subcp enca:" + self.lang + ":utf-8"
+         extra += " -fontconfig -subfont-text-scale " + str(self.opts.subscl) + " -subpos 100 -subcp enca:" + self.lang + ":utf-8"
          if exists(sub):  extra += " -sub \"" + sub + "\""
       else:
          extra += " -noautosub"
