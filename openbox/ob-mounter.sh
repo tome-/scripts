@@ -182,7 +182,7 @@ devi2menu() {
    local lab="$(getinfo "$1" $DINF_LABEL)"
    [[ "${lab/__/}" ==  "$lab" ]] && title="${lab//_/__}" || title="$lab"
    local mntpath="$(getinfo "$1" $DINF_MPATH)"
-   [[ -n "$mntpath" ]] && title="[${title}]"
+   [[ -n "$mntpath" ]] && title="[ ${title} ]"
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
    echo "  <separator label=\"$(getinfo "$1" $DINF_DEV): $lab\"/>"
    for (( x=0 ; $x < $l ; x++ )); do
@@ -259,7 +259,7 @@ devsmenu() {
 }
 splitdevs() {
    local dev dtype dinf
-   for dev in /dev/sr[0-9] /dev/sd[a-z][1-9]{,[0-9]}; do
+   for dev in /dev/sr[0-9] /dev/sd[a-z]{,[1-9]{,[0-9]}}; do
       dinf="$(makeinfo "$dev")"
       if [[ -n "$dinf" ]]; then
          dtype="$(getinfo "$dinf" "$DINF_TYPE")"

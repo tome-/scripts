@@ -21,7 +21,7 @@ class Todivx:
             "fps":"ustaw ilość klatek na sek dla wideo","mbd":"algorytm mbd: 0, 1 lub 2 (domyślnie: 2)",
             "freq":"częstotliwość dla strumienia audio (domyślnie: 44100)",
             "subt":"dodaj napisy ('auto' = taka sama nazwa jak wideo)",
-            "subscl":"skalowania czcionki napisów (domyślnie: 4)",
+            "subscl":"skalowanie czcionki napisów (domyślnie: 4)",
             "vol":"zmiana głośności (od -200dB do 60dB, domyślnie: 0dB)",
             "trell":"ustaw optymalną quanizację","xvid":"tryb xvid","nskip":"nie opuszczaj ramek",
             "threads":"używaj wielu wątków od 1 do 8 (domyślnie: 1 )",
