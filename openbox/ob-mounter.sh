@@ -18,13 +18,14 @@ shopt -s nullglob
 FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
 
 # --- some configs -----------------------------------------
-UDISKS=$(type -p udisks)
+USEUDISKS=1    # 1 for udisks1, 2 for udisks2
+UDISKS=$([[ $USEUDISKS == 1 ]] && type -p udisks || [[ $USEUDISKS == 2 ]] && type -p udisksctl) || USEUDISKS=
 NOTIFY=$(type -p notify-send)
 NICON="/usr/share/icons/gnome/32x32/devices/"
 NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
-USEUDISKS=1
+MFOLDER="$([[ $USEUDISKS == 2 ]] && echo "/run/media/$USER" || echo "/media")"
 PARTLETTER=
 # ----------------------------------------------------------
 
@@ -69,27 +70,30 @@ declare -r ICONTAB=(${NICON}drive-removable-media${NISUFF} ${NICON}drive-cdrom${
 # --- functions ---
 mounter() {
    # $1 = devinfo
-   if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      echo "udisks --mount \"$(getinfo "$1" $DINF_DEV)\""
+   local uctab=(":" "udisks --mount" "udisksctl mount -b")
+   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == 1 || $USEUDISKS == 2 ]]; then
+      echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\""
+
    else
       echo "pmount -e \"$(getinfo "$1" $DINF_DEV)\" \"$(getinfo "$1" $DINF_LABEL)\""
    fi
 }
 umounter() {
    # $1 = devinfo
-   if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
-      echo "udisks --unmount \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
+   local uctab=(":" "udisks --unmount" "udisksctl unmount -b")
+   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == 1 || $USEUDISKS == 2 ]]; then
+      echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
    else
       echo "pumount \"$(getinfo "$1" $DINF_DEV)\""
    fi
 }
 ejecter() {
    # $1 = dev , $2 = dtype
-   local tab=(eject eject)
+   local tab=("eject -sp" "eject -sp")
    if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
       tab=("udisks --detach" "udisks --eject")
    else
-      if  [[ -n "$UDISK" ]]; then
+      if  [[ $USEUDISKS == 1 ]]; then
          tab[$DTYPE_USB]="udisks --detach"
       fi
    fi
@@ -197,9 +201,9 @@ devi2menu() {
       if [[ -z "$mntpath" ]]; then
          cmd="sh -c '$(mounter "$1") &amp;&amp; "
          if [[ $cdir == 1 ]]; then
-            cmd+="cd \"/media/$lab\" &amp;&amp; exec $fm'"
+            cmd+="cd \"$MFOLDER/$lab\" &amp;&amp; exec $fm'"
          else
-            cmd+="exec $fm \"/media/$lab\"'"
+            cmd+="exec $fm \"$MFOLDER/$lab\"'"
          fi
       else
          if [[ $cdir == 1 ]]; then
