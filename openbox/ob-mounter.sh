@@ -18,8 +18,8 @@ shopt -s nullglob
 FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
 
 # --- some configs -----------------------------------------
-USEUDISKS=1    # 1 for udisks1, 2 for udisks2
-UDISKS=$([[ $USEUDISKS == 1 ]] && type -p udisks || [[ $USEUDISKS == 2 ]] && type -p udisksctl) || USEUDISKS=
+USEUDISKS=    # 1 for udisks1, 2 for udisks2
+UDISKS=$(([[ $USEUDISKS == 1 ]] && type -p udisks) || ([[ $USEUDISKS == 2 ]] && type -p udisksctl)) || USEUDISKS=
 NOTIFY=$(type -p notify-send)
 NICON="/usr/share/icons/gnome/32x32/devices/"
 NISUFF=".png"

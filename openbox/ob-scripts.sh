@@ -44,6 +44,7 @@ main() {
    fi
    item "$OBHOME/menu.xml"
    item "$OBHOME/rc.xml"
+   item "$OBHOME/environment"
    if [ -d "$OBHOME/scripts" ]; then
       echo "<separator/>"
       echo "<menu id=\"ob-scripts-menu\" label=\"scripts\">"

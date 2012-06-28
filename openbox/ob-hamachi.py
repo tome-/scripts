@@ -54,6 +54,8 @@ class hamachi():
             if line.find("[") >= 0:
                self.linetabs.insert(0,line.encode())
                break
+            while line != "" and line.find('5.') == -1:  # skip comments on hamachi list
+               line = gNext()
             if line != "":
                cltab = line.split() ; clstat = clname = ''
                if cltab[0] == "*" or cltab[0] == "x":
