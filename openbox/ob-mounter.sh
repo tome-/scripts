@@ -15,7 +15,7 @@ shopt -s nullglob
 
 # file managers ... ----------------------------------------
 # ',' = set label  ; ':' = cd to mount point
-FILEMANS=(pcmanfm "xterm -e mc","midnight commander" ":xterm")
+FILEMANS=(spacefm "xterm -e mc","midnight commander" ":xterm")
 
 # --- some configs -----------------------------------------
 USEUDISKS=    # 1 for udisks1, 2 for udisks2
@@ -154,7 +154,9 @@ umountitem() {
    # $1 = devinfo
    local cmd="$(umounter "$1")"
    if [[ -n "$NOTIFY" ]]; then
-      cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
+      cmd="sh -c '$cmd &amp;&amp; sync &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
+   else
+      cmd="sh -c '$cmd &amp;&amp; sync'"
    fi
    echo "  <item label=\"$UMOUNTMSG\">"
    echo "   <action name=\"execute\">"
