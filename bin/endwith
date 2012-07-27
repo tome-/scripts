@@ -9,22 +9,24 @@ WAIT4=15
 
 # check args
 if [[ -z $1 || -z $2 || "$1" = "-h" || "$1" = "--help" ]]; then
-    echo "USAGE: $(basename "$0") <master app> <app> [args]"
-    exit 1
+   echo "USAGE: $(basename "$0") <master app> <app> [args]"
+   exit 1
 fi
 
+mapp="$1" ; app="$2" ; shift ; shift
+
 # wait for master app
-while [[ -z $(pidof $1) ]]; do
-    sleep 1
-    ((WAIT4--))
-    [[ $WAIT4 = 0 ]] && exit 1
+while [[ -z $(pidof $mapp) ]]; do
+   sleep 1
+   ((WAIT4--))
+   [[ $WAIT4 = 0 ]] && exit 1
 done
 
 # run application
-if [[ $WAIT4 != 0 ]]; then
-   (eval "$2" "$3") & PID=$!
-    if [[ $? = 0 ]]; then
-       nohup &>/dev/null sh -c "sleep 1;while pidof >/dev/null '$1'&&pidof '$2'|grep -q $PID;do sleep 1;done&&kill -15 $PID||kill -9 $PID" &
-    fi
+if [[ $WAIT4 -gt 0 ]]; then
+   "$app" "$@" & PID=$!
+   if [[ $? = 0 ]]; then
+      nohup &>/dev/null sh -c "sleep 1;while pidof >/dev/null '$mapp'&&pidof '$app'|grep -q $PID;do sleep 1;done&&kill -15 $PID||kill -9 $PID" &
+   fi
 fi
 
