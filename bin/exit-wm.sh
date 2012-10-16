@@ -22,12 +22,12 @@ case ${LANG%.*} in
   *)
     USSD="  > Don't forget add shutdown command to /etc/sudoers <"
     ERXD=">>> Warning: install zenity or xdialog or dialog+xterm. <<<"
-    MESG="Select right option:"
+    MESG="Select correct option:"
     MOPT="Option"
     MSEL="Select"
     LOGO="Logout"
     REST="Reboot"
-    HALT="Shutdown"
+    HALT="Halt"
   ;;
 esac
 
@@ -71,7 +71,9 @@ haltsys() {
   (sleep 0.5 && kill4user)&
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || {
-    if [ "$(sudo -n -l shutdown -h now)" != "" ]; then
+    if [ -n "$(sudo -n -l poweroff)" ]; then
+      sudo poweroff
+    elif [ -n "$(sudo -n -l shutdown -h now)" ]; then
       sudo shutdown -h now
     fi
   }
@@ -82,7 +84,9 @@ rebootsys() {
   (sleep 0.5 && kill4user)&
   dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
        /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || {
-    if [ "$(sudo -n -l shutdown -r now)" != "" ]; then
+    if [ -n "$(sudo -n -l reboot)" ]; then
+      sudo reboot
+    elif [ -n "$(sudo -n -l shutdown -r now)" ]; then
       sudo shutdown -r now
     fi
   }
