@@ -21,7 +21,7 @@ autostart() {
    [ -z "$1" ] && usage
 
    local DESK="$1"
-   local declare -A tab
+   local -A tab
    local app auto nr cmd
 
    for app in /etc/xdg/autostart/*.desktop; do
