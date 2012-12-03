@@ -18,14 +18,14 @@ shopt -s nullglob
 FILEMANS=(spacefm "xterm -e mc","midnight commander" ":xterm")
 
 # --- some configs -----------------------------------------
-USEUDISKS=    # 1 for udisks1, 2 for udisks2
-UDISKS=$(([[ $USEUDISKS == 1 ]] && type -p udisks) || ([[ $USEUDISKS == 2 ]] && type -p udisksctl)) || USEUDISKS=
+USEUDISKS=3    # 1 for udisks1, 2 for udisks2, 3 for udevil
+UDISKS=$(([[ $USEUDISKS == 1 ]] && type -fp udisks) || ([[ $USEUDISKS == 2 ]] && type -fp udisksctl) || ([[ $USEUDISKS == 3 ]] && type -fp udevil)) || USEUDISKS=
 NOTIFY=$(type -p notify-send)
 NICON="/usr/share/icons/gnome/32x32/devices/"
 NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
-MFOLDER="$([[ $USEUDISKS == 2 ]] && echo "/run/media/$USER" || echo "/media")"
+MFOLDER="$([[ $USEUDISKS == [2-3] ]] && echo "/run/media/$USER" || echo "/media")"
 PARTLETTER=
 # ----------------------------------------------------------
 
@@ -70,8 +70,8 @@ declare -r ICONTAB=(${NICON}drive-removable-media${NISUFF} ${NICON}drive-cdrom${
 # --- functions ---
 mounter() {
    # $1 = devinfo
-   local uctab=(":" "udisks --mount" "udisksctl mount -b")
-   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == 1 || $USEUDISKS == 2 ]]; then
+   local uctab=(":" "udisks --mount" "udisksctl mount -b" "udevil mount")
+   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == [1-3] ]]; then
       echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\""
 
    else
@@ -80,8 +80,8 @@ mounter() {
 }
 umounter() {
    # $1 = devinfo
-   local uctab=(":" "udisks --unmount" "udisksctl unmount -b")
-   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == 1 || $USEUDISKS == 2 ]]; then
+   local uctab=(":" "udisks --unmount" "udisksctl unmount -b" "udevil unmount")
+   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == [1-3] ]]; then
       echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
    else
       echo "pumount \"$(getinfo "$1" $DINF_DEV)\""

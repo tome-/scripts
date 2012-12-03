@@ -69,7 +69,7 @@ runmode() {
    fi
 
    if [ -f "$file" ]; then
-      cmd="$(grep -i 'exec=' "$file")"
+      cmd="$(grep -i -m 1 'exec=' "$file")"
       if [ -n "$TESTMODE" ]; then
          echo -e "${file##*/}:\n\t ==> ${cmd:5}"
       else
