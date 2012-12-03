@@ -4,10 +4,9 @@
 # Author:   grimi <grimi at poczta dot fm>
 # License:  GNU GPL v3
 # Requires: grep
-# Requires: pmount,eject,[udisks: for usb detaching]
-# Requires: or udisks
-# Note:     mounting partions by pmount is posible,
-# Note:     after adding to /etc/pmount.allow 4x: /dev/sda[1-9]
+# Requires: eject (if not udisks used)
+# Requires: pmount or udisks or udisks2 or udevil
+
 
 set -o nounset
 shopt -s nullglob
@@ -18,14 +17,15 @@ shopt -s nullglob
 FILEMANS=(spacefm "xterm -e mc","midnight commander" ":xterm")
 
 # --- some configs -----------------------------------------
-USEUDISKS=3    # 1 for udisks1, 2 for udisks2, 3 for udevil
-UDISKS=$(([[ $USEUDISKS == 1 ]] && type -fp udisks) || ([[ $USEUDISKS == 2 ]] && type -fp udisksctl) || ([[ $USEUDISKS == 3 ]] && type -fp udevil)) || USEUDISKS=
-NOTIFY=$(type -p notify-send)
+#UDMTYPE=3  # 0 for pmount , 1 for udisks1, 2 for udisks2, 3 for udevil
+UDMTYPE=$(([[ $(type -fp pmount) ]] && echo 0) || ([[ $(type -fp udisks) ]] && echo 1) ||
+         ([[ $(type -fp udisksctl) ]] && echo 2) || ([[ $(type -fp udevil) ]] && echo 3))
+NOTIFY=$(type -fp notify-send)
 NICON="/usr/share/icons/gnome/32x32/devices/"
 NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
-MFOLDER="$([[ $USEUDISKS == [2-3] ]] && echo "/run/media/$USER" || echo "/media")"
+MFOLDER="$([[ $UDMTYPE == [2-3] ]] && echo "/run/media/$USER" || echo "/media")"
 PARTLETTER=
 # ----------------------------------------------------------
 
@@ -70,32 +70,32 @@ declare -r ICONTAB=(${NICON}drive-removable-media${NISUFF} ${NICON}drive-cdrom${
 # --- functions ---
 mounter() {
    # $1 = devinfo
-   local uctab=(":" "udisks --mount" "udisksctl mount -b" "udevil mount")
-   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == [1-3] ]]; then
-      echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\""
-
+   local uctab=("pmount" "udisks --mount" "udisksctl mount -b" "udevil mount")
+   if [[ $UDMTYPE == [0-3] ]]; then
+      echo -n "${uctab[$UDMTYPE]} \"$(getinfo "$1" $DINF_DEV)\""
+      if [[ $UDMTYPE == 0 ]]; then
+         echo " \"$(getinfo "$1" $DINF_LABEL)\""
+      else
+         echo ""
+      fi
    else
-      echo "pmount -e \"$(getinfo "$1" $DINF_DEV)\" \"$(getinfo "$1" $DINF_LABEL)\""
+      echo "echo \"mount '$1'\""
    fi
 }
 umounter() {
    # $1 = devinfo
-   local uctab=(":" "udisks --unmount" "udisksctl unmount -b" "udevil unmount")
-   if [[ -n "$UDISKS" ]] && [[ $USEUDISKS == [1-3] ]]; then
-      echo "${uctab[$USEUDISKS]} \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
+   local uctab=("pumount" "udisks --unmount" "udisksctl unmount -b" "udevil unmount")
+   if [[ $UDMTYPE == [0-3] ]]; then
+      echo "${uctab[$UDMTYPE]} \"$(getinfo "$1" $DINF_DEV)\"|grep -iq \"failed\" ; [[ \$? != 0 ]]"
    else
-      echo "pumount \"$(getinfo "$1" $DINF_DEV)\""
+      echo "echo \"unmount '$1'\""
    fi
 }
 ejecter() {
    # $1 = dev , $2 = dtype
    local tab=("eject -sp" "eject -sp")
-   if [[ $USEUDISKS == 1 && -n "$UDISKS" ]]; then
+   if [[ $UDMTYPE == 1 ]]; then
       tab=("udisks --detach" "udisks --eject")
-   else
-      if  [[ $USEUDISKS == 1 ]]; then
-         tab[$DTYPE_USB]="udisks --detach"
-      fi
    fi
    echo "${tab[$2]} \"$1\""
 }
@@ -154,7 +154,8 @@ umountitem() {
    # $1 = devinfo
    local cmd="$(umounter "$1")"
    if [[ -n "$NOTIFY" ]]; then
-      cmd="sh -c '$cmd &amp;&amp; sync &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
+      cmd="sh -c '$cmd &amp;&amp; sync &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\""
+      cmd+=" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
    else
       cmd="sh -c '$cmd &amp;&amp; sync'"
    fi
