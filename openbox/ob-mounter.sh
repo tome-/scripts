@@ -75,6 +75,8 @@ mounter() {
       echo -n "${uctab[$UDMTYPE]} \"$(getinfo "$1" $DINF_DEV)\""
       if [[ $UDMTYPE == 0 ]]; then
          echo " \"$(getinfo "$1" $DINF_LABEL)\""
+      elif [[ $UDMTYPE == 3 ]]; then
+         echo " \"$MFOLDER/$(getinfo "$1" $DINF_LABEL)\""
       else
          echo ""
       fi
@@ -121,7 +123,7 @@ makeinfo() {
          done
       fi
    fi
-   echo -e "${typ}:${lab[0]}:/dev/${dev[0]##*/}:${mnt}:${sys}"
+   printf "${typ}:${lab[0]}:/dev/${dev[0]##*/}:${mnt}:${sys}"
 }
 getinfo() {
    # $1 = devinfo , $2 = info type
@@ -285,7 +287,7 @@ splitdevs() {
 
 
 
-########## Begin menu gen ####################################
+########## menu gen #########################
 
 splitdevs
 echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
