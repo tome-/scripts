@@ -20,7 +20,11 @@
 set -o nounset                              # Treat unset variables as an error
 
 
-EDITOR="xterm -g 90x28 -e vim"
+EDITOR="xterm -g 100x30 -e vim"
+OBHOME="${XDG_CONFIG_HOME:-$HOME/.config}/openbox"
+
+SHOWCONFIGS=1
+SHOWSCRIPTS=1
 
 
 
@@ -33,10 +37,7 @@ item() {
    echo " </item>"
 }
 
-main() {
-   local f OBHOME="$XDG_CONFIG_HOME/openbox"
-   echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-   echo "<openbox_pipe_menu>"
+configs() {
    if [ -f "$OBHOME/autostart" ]; then
       item "$OBHOME/autostart"
    else
@@ -45,8 +46,12 @@ main() {
    item "$OBHOME/menu.xml"
    item "$OBHOME/rc.xml"
    item "$OBHOME/environment"
+}
+
+scripts() {
+   local f
    if [ -d "$OBHOME/scripts" ]; then
-      echo "<separator/>"
+      [ -n "$SHOWCONFIGS" ] && echo "<separator/>"
       echo "<menu id=\"ob-scripts-menu\" label=\"scripts\">"
       for f in "$OBHOME"/scripts/*;do
          if [ "$f" == "$OBHOME/scripts/*" ]; then
@@ -57,6 +62,14 @@ main() {
       done
       echo "</menu>"
    fi
+}
+
+
+main() {
+   echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+   echo "<openbox_pipe_menu>"
+   [ -n "$SHOWCONFIGS" ] && configs
+   [ -n "$SHOWCONFIGS" ] && scripts
    echo "</openbox_pipe_menu>"
 }
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Name:    endwith
 # About:   kill app after master app
 # Author:  grimi

@@ -106,18 +106,18 @@ makeinfo() {
    local medi typ=$DTYPE_PART lab dev mnt dm sys=0
    medi="$(udevadm info --query=property --name="$1"|grep -e "ID_BUS=usb" -e "ID_TYPE=cd" \
       -e "PARTITION=" -e "FS_TYPE=swap" -e "LABEL_ENC=" -e "UUID_ENC=" -e "DEVNAME=")" || return
-   lab="${medi/*LABEL_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && {
-      lab="${medi/*UUID_ENC=/}" ; [[ "${lab}" == "${medi}" ]] && return ; }
+   lab="${medi/*LABEL_ENC=/}" ; [[ ${lab} == ${medi} ]] && {
+      lab="${medi/*UUID_ENC=/}" ; [[ ${lab} == ${medi} ]] && return ; }
    lab=(${lab}) ; dev=(${medi/*DEVNAME=/})
    mnt=($(grep -w -e "${dev[0]}" -e "/dev/disk/by-label/${lab[0]}" /etc/mtab))
    [[ ${#mnt[@]} != 6 ]] && mnt="" || mnt="${mnt[1]//\\040/ }"
-   [[ "${medi}" != "${medi/=usb/}" ]] && typ=$DTYPE_USB
-   [[ "${medi}" != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
-   [[ "${medi}" != "${medi/=swap/}" ]] && return
+   [[ ${medi} != "${medi/=usb/}" ]] && typ=$DTYPE_USB
+   [[ ${medi} != "${medi/=cd/}" ]] && typ=$DTYPE_CDROM
+   [[ ${medi} != "${medi/=swap/}" ]] && return
    if [[ $typ -eq $DTYPE_PART ]]; then
-      if [[ -n "$mnt" ]]; then
+      if [[ -n $mnt ]]; then
          for dm in / /boot /home /tmp /usr /var; do
-            [[ "$mnt" == "$dm" ]] && {
+            [[ $mnt == $dm ]] && {
                [[ $SHOWSYSPARTS -ne 1 ]] && return
                sys=1; break; }
          done
@@ -134,11 +134,11 @@ ejectableusb() {
    # $1 = devinfo usb
    local ejdev ejdevp ejdevm dev noeject=0
    ejdevp="$(getinfo "$1" $DINF_DEV)" ; ejdev="${ejdevp/[1-9]/}"
-   if [[ "$ejdev" != "$ejdevp" ]]; then
+   if [[ $ejdev != $ejdevp ]]; then
       for dev in "${USBTAB[@]}"; do
-         if [[ -n "$(getinfo "$dev" $DINF_MPATH)" ]]; then
+         if [[ -n $(getinfo "$dev" $DINF_MPATH) ]]; then
             ejdevm="$(getinfo "$dev" $DINF_DEV)"
-            [[ "$ejdev" == "${ejdevm/[1-9]/}" ]] && { noeject=1 ; break; }
+            [[ $ejdev == ${ejdevm/[1-9]/} ]] && { noeject=1 ; break; }
          fi
       done
    fi
@@ -155,7 +155,7 @@ mountitem() {
 umountitem() {
    # $1 = devinfo
    local cmd="$(umounter "$1")"
-   if [[ -n "$NOTIFY" ]]; then
+   if [[ -n $NOTIFY ]]; then
       cmd="sh -c '$cmd &amp;&amp; sync &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$(getinfo "$1" $DINF_TYPE)]}\""
       cmd+=" \"$(getinfo "$1" $DINF_LABEL):  $UMOUNTEDMSG.\"'"
    else
@@ -175,7 +175,7 @@ ejectitem() {
       medi="${medi/[1-9]/}"
    fi
    cmd="$(ejecter "$medi" $dtype)"
-   if [[ -n "$NOTIFY" ]]; then
+   if [[ -n $NOTIFY ]]; then
       cmd="sh -c '$cmd &amp;&amp; notify-send -t 2000 -i \"${ICONTAB[$dtype]}\" \"$(getinfo "$1" $DINF_LABEL):  $EJECTEDMSG.\"'"
    fi
    echo "  <item label=\"$EJECTMSG\">"
@@ -189,21 +189,21 @@ devi2menu() {
    local cmd fmn fm title cdir x
    local l=${#FILEMANS[@]} dtype=$(getinfo "$1" $DINF_TYPE)
    local lab="$(getinfo "$1" $DINF_LABEL)"
-   [[ "${lab/__/}" ==  "$lab" ]] && title="${lab//_/__}" || title="$lab"
+   [[ ${lab/__/} ==  $lab ]] && title="${lab//_/__}" || title="$lab"
    local mntpath="$(getinfo "$1" $DINF_MPATH)"
-   [[ -n "$mntpath" ]] && title="[ ${title} ]"
+   [[ -n $mntpath ]] && title="[ ${title} ]"
    echo " <menu id=\"$lab-menu\" label=\"$title\">"
    echo "  <separator label=\"$(getinfo "$1" $DINF_DEV): $lab\"/>"
    for (( x=0 ; $x < $l ; x++ )); do
       cdir=0 ; fm="${FILEMANS[$x]}" ; fmn="$fm"
-      if [[ "${fm}" != "${fm/*,/}" ]]; then
+      if [[ ${fm} != ${fm/*,/} ]]; then
          fmn="${fm/*,/}" ; fm="${fm/,*/}"
       fi
-      if [[ "${fm:0:1}" == ":" ]]; then
+      if [[ ${fm:0:1} == ":" ]]; then
          fm="${fm:1}" ; fmn="${fmn:1}" ; cdir=1
       fi
       echo "  <item label=\"$OPWITHMSG $fmn\">"
-      if [[ -z "$mntpath" ]]; then
+      if [[ -z $mntpath ]]; then
          cmd="sh -c '$(mounter "$1") &amp;&amp; "
          if [[ $cdir == 1 ]]; then
             cmd+="cd \"$MFOLDER/$lab\" &amp;&amp; exec $fm'"
@@ -259,7 +259,7 @@ devsmenu() {
       echo " <separator label=\"$PARTMSG\"/>"
       for devi in "${PARTAB[@]}"; do
          da=$(getinfo "$devi" $DINF_DEV) ; da=${da:7:1}
-         [[ -n "$PARTLETTER" && "$da" != "$PARTLETTER" ]] && \
+         [[ -n $PARTLETTER && $da != $PARTLETTER ]] && \
             echo " <separator/>"
          PARTLETTER="$da"
          devi2menu "$devi" $DTYPE_PART
@@ -270,7 +270,7 @@ splitdevs() {
    local dev dtype dinf
    for dev in /dev/sr[0-9] /dev/sd[a-z]{,[1-9]{,[0-9]}}; do
       dinf="$(makeinfo "$dev")"
-      if [[ -n "$dinf" ]]; then
+      if [[ -n $dinf ]]; then
          dtype="$(getinfo "$dinf" "$DINF_TYPE")"
          case $dtype in
             $DTYPE_CDROM)

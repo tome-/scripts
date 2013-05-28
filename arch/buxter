@@ -103,7 +103,7 @@ source PKGBUILD
 
 [ "${arch[0]}" = "any" ] && archpkg="any" || archpkg="$CARCH"
 
-pkgdef="package='${pkgname[0]}-${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
+pkgdef="package='${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
 
 
 if [ -n "$BUILDSHM" ]; then
@@ -122,7 +122,7 @@ if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
       pkgdef="${pkgdef} ; echo -en '${MSG_32}' ; read res32 ; \
          [ \"\${res32,,}\" == '$ANS_32' ] && bit32='linux32 ' && \
-         package='${pkgname}-${pkgver}-${pkgrel}-i686${PKGEXT}'"
+         package='${pkgname}-${epoch:+$epoch:}${pkgver}-${pkgrel}-i686${PKGEXT}'"
    fi
 fi
 

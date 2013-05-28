@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Name:     gweather
 # About:    extract weather from google, to use with conky
 # Author:   grimi <grimi at poczta dot fm>
