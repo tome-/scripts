@@ -34,62 +34,105 @@ esac
 
 WMTAB=("openbox:openbox --exit")
 
-
-
 NAME="${0##*/}"
 
-ZENITY="$(type -p zenity)"
+TEST="$([ "$1" == "test" ] && echo 1 || echo "")"
+
+ZENITY="$(type -pf zenity)"
 if [ -z "$ZENITY" ]; then
-   XDIALOG="$(type -p Xdialog)"
+  XDIALOG="$(type -pf Xdialog)"
 fi
 if [ -z "$XDIALOG" ]; then
-  DIALOG="$(type -p dialog)"
-  XTERM="$(type -p xterm)"
+  DIALOG="$(type -pf dialog)"
+  XTERM="$(type -pf xterm)"
   if [ -z "$DIALOG" ] || [ -z "$XTERM" ]; then
     echo "$ERXD" ; exit 1
   fi
 fi
 
 
+
 killwm() {
   local len=${#WMTAB[@]} wm=() oi="$IFS" IFS
-  while [ $len -gt 0 ]; do
-    let len-=1
-    IFS=":" wm=(${WMTAB[$len]}) && IFS="$oi"
-    [ -n "$(pidof ${wm[0]})" ] && break
-  done
-  [ -n "${wm[1]}" ] && ${wm[1]} || pkill -SIGKILL ${wm[0]}
+  if [ $TEST == 1 ] ; then
+    echo ">>> in killwm"
+  else
+    while [ $len -gt 0 ]; do
+      let len-=1
+      IFS=":" wm=(${WMTAB[$len]}) && IFS="$oi"
+      [ -n "$(pidof ${wm[0]})" ] && break
+    done
+    [ -n "${wm[1]}" ] && (${wm[1]} &)
+    sleep 2 && pkill -SIGKILL ${wm[0]}
+  fi
 }
 
 
 kill4user() {
-  [ "$USER" != "root" ] && pkill -SIGKILL -u $USER
+  if [ $TEST == 1 ]; then
+    echo ">>> in kill4user"
+  else
+    if [ "$USER" != "root" ]; then
+      ps --user $USER | grep -Ev "ssh|tmux|PID" | cut -b1-5 | xargs -t pkill -SIGKILL
+      #pkill -SIGKILL -u $USER
+    fi
+  fi
 }
 
 
 haltsys() {
+  local PTAB=()
+  if [ -n "$(type -pf pkaction)" ] && [ -n "$(type -pf systemctl)" ]; then
+    PTAB=($(pkaction|grep -e "org.freedesktop.login$XDG_SESSION_ID.power-off"))
+  fi
   (sleep 0.5 && kill4user)&
-  dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop || {
-    if [ -n "$(sudo -n -l poweroff)" ]; then
+  if [ ${#PTAB[@]} != 0 ] && [ "${PTAB[0]##*.}" == "power-off" ]; then
+    if [ $TEST == 1 ]; then
+      echo "systemctl poweroff"
+    else
+      systemctl poweroff
+    fi
+  elif [ -n "$(sudo -n -l poweroff)" ]; then
+    if [ $TEST == 1 ]; then
+      echo "sudo poweroff"
+    else
       sudo poweroff
-    elif [ -n "$(sudo -n -l shutdown -h now)" ]; then
+    fi
+  elif [ -n "$(sudo -n -l shutdown -h now)" ]; then
+    if [ $TEST == 1 ]; then
+      echo "sudo shutdown -h now"
+    else
       sudo shutdown -h now
     fi
-  }
+  fi
 }
 
 
 rebootsys() {
+  local PTAB=()
+  if [ -n "$(type -pf pkaction)" ] && [ -n "$(type -pf systemctl)" ]; then
+    PTAB=($(pkaction|grep -e "org.freedesktop.login$XDG_SESSION_ID.reboot"))
+  fi
   (sleep 0.5 && kill4user)&
-  dbus-send --system --print-reply --dest=org.freedesktop.ConsoleKit \
-       /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Restart || {
-    if [ -n "$(sudo -n -l reboot)" ]; then
+  if [ ${#PTAB[@]} != 0 ] && [ "${PTAB[0]##*.}" == "reboot" ]; then
+    if [ $TEST == 1 ]; then
+      echo "systemctl reboot"
+    else
+      systemctl reboot
+    fi
+  elif [ -n "$(sudo -n -l reboot)" ]; then
+    if [ $TEST == 1 ]; then
+      echo "sudo reboot"
+    else
       sudo reboot
-    elif [ -n "$(sudo -n -l shutdown -r now)" ]; then
+    fi
+  elif [ -n "$(sudo -n -l shutdown -r now)" ]; then
+    if [ $TEST == 1 ]; then
+      echo "sudo shutdown -r now"
+    else
       sudo shutdown -r now
     fi
-  }
+  fi
 }
 
 
@@ -110,4 +153,6 @@ case "$OPTIO" in
   "$HALT")  haltsys ;;
 esac
 
+
+# vim:set ts=2 sw=2 sts=2 et:
 
