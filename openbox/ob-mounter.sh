@@ -30,7 +30,6 @@ PARTLETTER=
 # ----------------------------------------------------------
 
 
-
 # --- messages ---
 case ${LANG%_*} in
    pl)
@@ -54,16 +53,15 @@ case ${LANG%_*} in
 esac
 
 
-
 # --- variables ---
-declare -a USBTAB CDTAB PARTAB
+#declare -a USBTAB CDTAB PARTAB
+USBTAB=(); CDTAB=(); PARTAB=()
 
 # --- constans ---
 declare -r DTYPE_USB=0 DTYPE_CDROM=1 DTYPE_PART=2
 declare -r DINF_TYPE=0 DINF_LABEL=1 DINF_DEV=2 DINF_MPATH=3 DINF_SYS=4
 declare -r DTYPETAB=(usb cdrom $PARTMSG)
 declare -r ICONTAB=(${NICON}drive-removable-media${NISUFF} ${NICON}drive-cdrom${NISUFF} ${NICON}drive-harddisk${NISUFF})
-
 
 
 
@@ -239,7 +237,7 @@ devi2menu() {
 }
 devsmenu() {
    local numofdevs devi da
-   (( numofdevs=${#USBTAB[@]}+${#CDTAB[@]}+${#PARTAB[@]} ))
+   let numofdevs=${#USBTAB[@]}+${#CDTAB[@]}+${#PARTAB[@]}
    if [[ $numofdevs == 0 ]];  then
       echo "<separator label=\"ob-pmount\"/>"
    fi
