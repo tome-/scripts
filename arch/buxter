@@ -12,6 +12,9 @@ TXTRES='\e[0m'
 NAME="${0##*/}"
 ANYES=0
 ANNOP=1
+#MKSRCMD="makepkg --source -f"
+MKSRCMD="mkaurball -f"
+
 
 case ${LANG%_*} in
    pl)
@@ -151,7 +154,7 @@ cmd="echo ; ${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> $
 
 
 if [ -n "$GENSOURCE" ]; then
-   cmd="${cmd} ; echo ; echo -en '${MSG_SO}' ; read sres ; [ \"\${sres,,}\" == '$ANS_SO' ] && makepkg --source -f"
+   cmd="${cmd} ; echo ; echo -en '${MSG_SO}' ; read sres ; [ \"\${sres,,}\" == '$ANS_SO' ] && $MKSRCMD"
 fi
 
 
@@ -172,4 +175,7 @@ if [ -n "$BUILDSHM" ]; then
    rmdir &>/dev/null "$USERSHM"
 fi
 
+if [ -d "$BUILDDIR" ]; then
+   [ -d "$BUILDDIR/${pkgname[0]}" ] && rm -fr "$BUILDDIR/${pkgname[0]}"
+fi
 

@@ -14,15 +14,32 @@
 #fi
 
 
+case ${LANG%_*} in
+    pl) USAGEMSG="Składnia: [-a(tryb AUR: cower jako wrapper)] [-n(bez koloru)]"
+        NCOWERMSG="zainstaluj cower"
+    ;;
+
+     *) USAGEMSG="Usage: [-a(AUR mode: cower as wrapper)] [-n(nocolors)]"
+        NCOWERMSG="install cower"
+    ;;
+esac
+
 if [ "$1" = "-h" ]; then
-   case ${LANG%_*} in
-      pl) echo "Składnia: [-n(bez koloru)]" ;;
-      *)  echo "Usage: [-n(nocolors)]";;
-   esac
+   echo "$USAGEMSG"
    exit 1
 fi
 
-PACNR=$(LANG=C pacman -Qqu | grep -Ev "^($ignore)$" | wc -l)
+if [ "$1" != "-a" ]; then
+    PACNR=$(LANG=C pacman -Qqu --color=never | grep -Ev "^($ignore)$" | wc -l)
+else
+    COWER=$(type -fp cower)
+    if [[ $COWER ]]; then
+        PACNR=$(LANG=C $COWER -u --color=never | wc -l)
+    else
+        PACNR="$NCOWERMSG"
+    fi
+    shift
+fi
 
 if [ "$1" != "-n" ]; then
    case $PACNR in
@@ -33,6 +50,7 @@ if [ "$1" != "-n" ]; then
    esac
    RESCOL='${color}'
 fi
+
 
 SetMsg() {
    case $PACNR in
