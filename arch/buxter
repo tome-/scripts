@@ -12,8 +12,8 @@ TXTRES='\e[0m'
 NAME="${0##*/}"
 ANYES=0
 ANNOP=1
-#MKSRCMD="makepkg --source -f"
-MKSRCMD="mkaurball -f"
+MKSRCMD="makepkg --source -f"
+#MKSRCMD="mkaurball -f"
 
 
 case ${LANG%_*} in
@@ -31,6 +31,9 @@ case ${LANG%_*} in
       MSG_CC="Budować z ccache"
       MSG_SO="Budować archiwum źródłowe"
       ANS_SO="t"
+      MSG_US="Zaktualizować sumy kontrolne źródeł"
+      ANS_US="t"
+      MSG_UU="pytaj, czy aktualizować sumy kontrolne źródeł"
       ANS_TB=(t n)
       MSG_Yn="[T/n]"
       MSG_yN="[t/N]"
@@ -49,6 +52,9 @@ case ${LANG%_*} in
       MSG_CC="Build with ccache"
       MSG_SO="Build source-only tarball"
       ANS_SO="y"
+      MSG_US="Update checksum for source"
+      ANS_US="y"
+      MSG_UU="ask to update sources checksums"
       ANS_TB=(y n)
       MSG_Yn="[Y/n]"
       MSG_yN="[y/N]"
@@ -59,15 +65,17 @@ MSG_EX="${BLDRED}==>${BLDWHI} ${MSG_EX} ? ${MSG_yN} ${TXTRES}"
 MSG_32="${BLDYEL}==>${BLDWHI} ${MSG_32} ? ${MSG_yN} ${TXTRES}"
 MSG_SO="${BLDYEL}==>${BLDWHI} ${MSG_SO} ? ${MSG_yN} ${TXTRES}"
 MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
+MSG_US="${BLDYEL}==>${BLDWHI} ${MSG_US} ? ${MSG_yN} ${TXTRES}"
 
 
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-tsgdh] ${BLDRED}[PKGBUILD]${TXTRES}"
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-tsgduh] ${BLDRED}[PKGBUILD]${TXTRES}"
    echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
    echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
    echo -e "    ${BLDWHI}-g${TXTRES}    ${MSG_SR}"
    echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
+   echo -e "    ${BLDWHI}-u${TXTRES}    ${MSG_UU}"
    echo -e "    ${BLDWHI}-h${TXTRES}    ${MSG_HE}"
    exit 1
 }
@@ -81,6 +89,7 @@ while [ "${1:0:1}" == "-" ]; do
          s)    BUILDSHM=1 ;;
          g)    GENSOURCE=1 ;;
          d)    DEBUGMODE=1 ;;
+         u)    UPDSUMS=1 ;;
          h)    usage ;;
       esac
       (( i++ ))
@@ -147,11 +156,14 @@ if [ "$archpkg" != "any" ]; then
    done
 fi
 
-
 cmd="echo ; ${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
    echo -ne '${MSG_EX}' ; read bres ; [ \"\${bres,,}\" == '$ANS_EX' ] && \
       (${cmd} echo ; \${bit32}makepkg -fs) ; else (${cmd} echo ; \${bit32}makepkg -s) ; fi"
 
+
+if [ -n "$UPDSUMS" ]; then
+   cmd="echo; echo -ne '${MSG_US}'; read ures; [ \"\${ures,,}\" == '$ANS_US' ] && updpkgsums; ${cmd}"
+fi
 
 if [ -n "$GENSOURCE" ]; then
    cmd="${cmd} ; echo ; echo -en '${MSG_SO}' ; read sres ; [ \"\${sres,,}\" == '$ANS_SO' ] && $MKSRCMD"
