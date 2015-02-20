@@ -10,8 +10,7 @@
 
 
 ## Some variables ##
-PACMAN="/usr/bin/pacman-color"
-[ -f "$PACMAN" ] || PACMAN="${PACMAN%-*}"
+PACMAN="/usr/bin/pacman"
 XTERM="/usr/bin/xterm"
 SUDO="/usr/bin/sudo"
 NAME="${0##*/}"

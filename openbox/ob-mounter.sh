@@ -14,7 +14,7 @@ shopt -s nullglob
 
 # file managers ... ----------------------------------------
 # ',' = set label  ; ':' = cd to mount point
-FILEMANS=(spacefm "xterm -e mc","midnight commander" ":xterm")
+FILEMANS=(spacefm "xterm -e mc","midnight commander" ":xterm -e bash,xterm")
 
 # --- some configs -----------------------------------------
 #UDMTYPE=3  # 0 for pmount , 1 for udisks1, 2 for udisks2, 3 for udevil
