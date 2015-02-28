@@ -5,22 +5,14 @@
 # License: GNU GPL v3
 
 
-#PACOUT="$(LANG=C pacman -Qu|grep 'Targets (.*)')"
-
-#if [ "$PACOUT" = "" ];then
-#  PACNR=0
-#else
-#  PACNR=`echo $PACOUT|sed 's/.*(//;s/).*//'`
-#fi
-
 
 case ${LANG%_*} in
     pl) USAGEMSG="Składnia: [-a(tryb AUR: cower jako wrapper)] [-n(bez koloru)]"
-        NCOWERMSG="zainstaluj cower"
+        NOAVAILMSG="niedostępne"
     ;;
 
      *) USAGEMSG="Usage: [-a(AUR mode: cower as wrapper)] [-n(nocolors)]"
-        NCOWERMSG="install cower"
+        NOAVAILMSG="not available"
     ;;
 esac
 
@@ -32,11 +24,12 @@ fi
 if [ "$1" != "-a" ]; then
     PACNR=$(LANG=C pacman -Qqu --color=never | grep -Ev "^($ignore)$" | wc -l)
 else
+    ping -w 3 -c 1 aur.archlinux.org >/dev/null ; AUROL=$?
     COWER=$(type -fp cower)
-    if [[ $COWER ]]; then
+    if [[ $AUROL -eq 0 && $COWER ]]; then
         PACNR=$(LANG=C $COWER -u --color=never | wc -l)
     else
-        PACNR="$NCOWERMSG"
+        PACNR="$NOAVAILMSG"
     fi
     shift
 fi
@@ -61,23 +54,25 @@ SetMsg() {
 }
 
 SetMsg_pl() {
-   NR1=${PACNR:${#PACNR}-1}
-   NR2=${PACNR:${#PACNR}-2}
-   if [ $PACNR = 0 ];then
-      MSG="aktualne"
-   elif [ $PACNR = 1 ];then
-      MSG="1 paczka"
-   elif [ $NR1 -ge 2 ] && [ $NR1 -le 4 ] && [ $[$NR2-$NR1] -ne 10 ]; then
-      MSG="$PACNR paczki"
-   else
-      MSG="$PACNR paczek"
-   fi
+    NR1=${PACNR:${#PACNR}-1}
+    NR2=${PACNR:${#PACNR}-2}
+    if [ $PACNR = 0 ];then
+        MSG="aktualne"
+    elif [ $PACNR = 1 ];then
+        MSG="1 paczka"
+    elif [ $NR1 -ge 2 ] && [ $NR1 -le 4 ] && [ $[$NR2-$NR1] -ne 10 ]; then
+        MSG="$PACNR paczki"
+    else
+        MSG="$PACNR paczek"
+    fi
 }
 
-case ${LANG%_*} in
-   pl) SetMsg_pl;;
-   *)  SetMsg;;
-esac
+if [ "$PACNR" != "$NOAVAILMSG" ]; then
+    case ${LANG%_*} in
+        pl) SetMsg_pl;;
+        *)  SetMsg;;
+    esac
+fi
 
 echo ${SETCOL}${MSG}${RESCOL}
 
