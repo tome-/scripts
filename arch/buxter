@@ -2,7 +2,7 @@
 # name:    buxter
 # author:  grimi
 # abot:    build ArchLinux pkg from fm menu
-# require: makepkg (part of pacman),xterm
+# require: makepkg (part of pacman),xterm, seq (part of coreutils)
 
 BLDRED='\e[1;31m'
 BLDWHI='\e[1;37m'
@@ -111,7 +111,19 @@ source /etc/makepkg.conf
 
 [ "${1%/*}" != "$1" ] && cd "${1%/*}"
 
-source PKGBUILD
+#source PKGBUILD
+pkgvars=(pkgname pkgver pkgrel arch epoch)
+while read line; do
+    for i in $(seq -s ' ' 0 $((${#pkgvars[@]}-1))); do
+        if [[ "${line:0:${#pkgvars[$i]}+1}" == "${pkgvars[$i]}=" ]]; then
+            eval $line
+            unset pkgvars[$i]
+            pkgvars=(${pkgvars[@]})
+            break
+        fi
+    done
+    [[ ${#pkgvars[@]} -eq 0 ]] && break
+done < PKGBUILD
 
 [ "${arch[0]}" = "any" ] && archpkg="any" || archpkg="$CARCH"
 
