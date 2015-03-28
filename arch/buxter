@@ -206,11 +206,11 @@ if [ -n "$GENSOURCE" ]; then
 fi
 
 
-[ -d src ] && rm -fr src
-[ -d pkg ] && rm -fr pkg
-
 if [ -d "$BUILDDIR" ]; then
    [ -d "$BUILDDIR/${pkgname[0]}" ] && rm -fr "$BUILDDIR/${pkgname[0]}"
+else
+   [ -d src ] && rm -fr src
+   [ -d pkg ] && rm -fr pkg
 fi
 
 
