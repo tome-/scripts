@@ -2,6 +2,7 @@
 # name:    buxter
 # author:  grimi
 # abot:    build ArchLinux pkg from fm menu
+# license: GNU GPL v3
 # require: makepkg & updpkgsums (parts of pacman)
 # require: grep, wc (part of coreutils), xterm
 
