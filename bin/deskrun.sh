@@ -5,6 +5,8 @@
 # License:  GNU GPL v3
 # Required: bashv4,grep,eval
 
+
+
 shopt -s nullglob
 
 
@@ -61,8 +63,8 @@ runmode() {
    [ "$file" == "${file%.desktop}" ] && file+=".desktop"
 
    if [ "${file##*/}" == "$file" ]; then
-      if [ -f "$XDG_DATA_HOME/applications/$file" ]; then
-         file="$XDG_DATA_HOME/applications/$file"
+      if [ -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/$file" ]; then
+         file="${XDG_DATA_HOME:-$HOME/.local/share}/applications/$file"
       elif [ -f "/usr/share/applications/$file" ]; then
          file="/usr/share/applications/$file"
       fi
@@ -70,10 +72,11 @@ runmode() {
 
    if [ -f "$file" ]; then
       cmd="$(grep -m 1 -i 'exec=' "$file")"
+      cmd="${cmd:5}" ; cmd="${cmd%%\%*}"
       if [ -n "$TESTMODE" ]; then
-         echo -e "${file##*/}:\n\t ==> ${cmd:5}"
+         echo -e "${file##*/}:\n\t ==> ${cmd}"
       else
-         ( sleep 0.1 && eval exec "${cmd:5}" )&
+         ( sleep 0.1 && eval exec "${cmd}" )&
       fi
    fi
 }
@@ -92,4 +95,6 @@ while [ -n "$1" ]; do
    shift
 done
 
+
+# vim: set et sts=3 sw=3 ts=3 :
 

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Build package
 Name[pl]=Buduj pakiet
-Exec=buxter -tgu %f
+Exec=buxter -tus %f
 Terminal=false
 Type=Application
 Icon=terminal

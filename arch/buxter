@@ -2,7 +2,8 @@
 # name:    buxter
 # author:  grimi
 # abot:    build ArchLinux pkg from fm menu
-# require: makepkg (part of pacman),xterm, seq (part of coreutils)
+# require: makepkg,updpkgsums (parts of pacman),xterm
+
 
 BLDRED='\e[1;31m'
 BLDWHI='\e[1;37m'
@@ -10,18 +11,21 @@ BLDYEL='\e[1;33m'
 TXTRES='\e[0m'
 
 NAME="${0##*/}"
+
 ANYES=0
 ANNOP=1
-MKSRCMD="makepkg --source -f"
-#MKSRCMD="mkaurball -f"
+
+MKPKGCMD="makepkg -s"
+MKSRCMD="makepkg -Sf"
+UPDSUMCMD="updpkgsums"
+
+ARGSLINE=""
 
 
 case ${LANG%_*} in
    pl)
       MSG_US="SKŁADNIA"
       MSG_TR="uruchom w xterm"
-      MSG_DG="nie wykonuj, pokaż linie komend"
-      MSG_SH="buduj w /dev/shm"
       MSG_SR="pytaj, czy generować archiwum źródłowe"
       MSG_HE="ten tekst"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie"
@@ -31,8 +35,8 @@ case ${LANG%_*} in
       MSG_CC="Budować z ccache"
       MSG_SO="Budować archiwum źródłowe"
       ANS_SO="t"
-      MSG_US="Zaktualizować sumy kontrolne źródeł"
-      ANS_US="t"
+      MSG_UC="Zaktualizować sumy kontrolne źródeł"
+      ANS_UC="t"
       MSG_UU="pytaj, czy aktualizować sumy kontrolne źródeł"
       ANS_TB=(t n)
       MSG_Yn="[T/n]"
@@ -41,8 +45,6 @@ case ${LANG%_*} in
    *)
       MSG_US="USAGE"
       MSG_TR="exec in xterm"
-      MSG_DG="don't exec, show cmd line"
-      MSG_SH="build in /dev/shm"
       MSG_SR="ask to generate a source-only tarball"
       MSG_HE="this message"
       MSG_EX="Package already exists. Build again"
@@ -52,8 +54,8 @@ case ${LANG%_*} in
       MSG_CC="Build with ccache"
       MSG_SO="Build source-only tarball"
       ANS_SO="y"
-      MSG_US="Update checksum for source"
-      ANS_US="y"
+      MSG_UC="Update checksum for source"
+      ANS_UC="y"
       MSG_UU="ask to update sources checksums"
       ANS_TB=(y n)
       MSG_Yn="[Y/n]"
@@ -61,21 +63,12 @@ case ${LANG%_*} in
    ;;
 esac
 
-MSG_EX="${BLDRED}==>${BLDWHI} ${MSG_EX} ? ${MSG_yN} ${TXTRES}"
-MSG_32="${BLDYEL}==>${BLDWHI} ${MSG_32} ? ${MSG_yN} ${TXTRES}"
-MSG_SO="${BLDYEL}==>${BLDWHI} ${MSG_SO} ? ${MSG_yN} ${TXTRES}"
-MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
-MSG_US="${BLDYEL}==>${BLDWHI} ${MSG_US} ? ${MSG_yN} ${TXTRES}"
-
-
 
 usage() {
-   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-tsgduh] ${BLDRED}[PKGBUILD]${TXTRES}"
+   echo -e "${BLDRED}==> ${BLDWHI}${MSG_US}: ${BLDYEL}[-tush] ${BLDRED}[PKGBUILD]${TXTRES}"
    echo -e "    ${BLDWHI}-t${TXTRES}    ${MSG_TR}"
-   echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SH}"
-   echo -e "    ${BLDWHI}-g${TXTRES}    ${MSG_SR}"
-   echo -e "    ${BLDWHI}-d${TXTRES}    ${MSG_DG}"
    echo -e "    ${BLDWHI}-u${TXTRES}    ${MSG_UU}"
+   echo -e "    ${BLDWHI}-s${TXTRES}    ${MSG_SR}"
    echo -e "    ${BLDWHI}-h${TXTRES}    ${MSG_HE}"
    exit 1
 }
@@ -86,11 +79,9 @@ while [ "${1:0:1}" == "-" ]; do
    while [ "${1:$i:1}" ]; do
       case "${1:$i:1}" in
          t)    TERMODE=1 ;;
-         s)    BUILDSHM=1 ;;
-         g)    GENSOURCE=1 ;;
-         d)    DEBUGMODE=1 ;;
-         u)    UPDSUMS=1 ;;
-         h)    usage ;;
+         u)    UPDSUMS=1;   ARGSLINE+="-u " ;;
+         s)    GENSOURCE=1; ARGSLINE+="-s " ;;
+         h)    SHOWUSAGE=1; ARGSLINE+="-h " ;;
       esac
       (( i++ ))
    done
@@ -98,108 +89,129 @@ while [ "${1:0:1}" == "-" ]; do
 done
 
 
+if [ -n "$1" ]; then
+   ARGSLINE+="'$1'"
+fi
+
+
+if [ -n "$TERMODE" ]; then
+   xterm -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
+   exit 0
+fi
+
+
+if [ -n "$SHOWUSAGE" ]; then
+   usage
+fi
+
+
 if [ ! -f PKGBUILD ]; then
-   if [ -z "$1" ]; then
+   if [ -z "$1" ] || [ "${1##*/}" != "PKGBUILD" ]; then
       usage
-   else
-      [ "${1##*/}" != "PKGBUILD" ] && usage
    fi
 fi
+
 
 source /etc/makepkg.conf
-[ -f ~/.makepkg.conf ] && source ~/.makepkg.conf
-
-[ "${1%/*}" != "$1" ] && cd "${1%/*}"
-
-#source PKGBUILD
-pkgvars=(pkgname pkgver pkgrel arch epoch)
-while read line; do
-    for i in $(seq -s ' ' 0 $((${#pkgvars[@]}-1))); do
-        if [[ "${line:0:${#pkgvars[$i]}+1}" == "${pkgvars[$i]}=" ]]; then
-            eval $line
-            unset pkgvars[$i]
-            pkgvars=(${pkgvars[@]})
-            break
-        fi
-    done
-    [[ ${#pkgvars[@]} -eq 0 ]] && break
-done < PKGBUILD
-
-[ "${arch[0]}" = "any" ] && archpkg="any" || archpkg="$CARCH"
-
-pkgdef="package='${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-${archpkg}${PKGEXT}'"
-
-
-if [ -n "$BUILDSHM" ]; then
-   [ -d src ] && rm -fr src
-   #[ -d pkg ] && rm -fr pkg
-   USERSHM="/dev/shm/${USER}"
-   BUILDSHM="${USERSHM}/${NAME}-${pkgname[0]}"
-   [ -d "$BUILDSHM" ] && rm -fr "$BUILDSHM"
-   install -dm700 "${BUILDSHM}"/{src,pkg}
-   ln -s "${BUILDSHM}/src" src
-   #ln -s "${BUILDSHM}/pkg" pkg
+if [ -f ~/.makepkg.conf ]; then
+   source ~/.makepkg.conf
 fi
 
+if [ "${1%/*}" != "$1" ]; then
+   cd "${1%/*}"
+fi
 
-if [ "${archpkg}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
+source PKGBUILD
+
+if [ "${arch[0]}" = "any" ]; then
+   ARCHPKG="any"
+else
+   ARCHPKG="$CARCH"
+fi
+
+PACKAGE="${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-${ARCHPKG}${PKGEXT}"
+
+
+if [ -n "$UPDSUMS" ]; then
+   echo -ne "\n${BLDYEL}==>${BLDWHI} ${MSG_UC} ? ${MSG_yN} ${TXTRES}"
+   read ures
+   if [ "${ures,,}" == "$ANS_UC" ]; then
+      $UPDSUMCMD
+   fi
+   unset ures
+fi
+
+if [ "${ARCHPKG}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
    if [ -n "$(pacman -Qq gcc-multilib)" ]; then
-      pkgdef="${pkgdef} ; echo -en '${MSG_32}' ; read res32 ; \
-         [ \"\${res32,,}\" == '$ANS_32' ] && bit32='linux32 ' && \
-         package='${pkgname}-${epoch:+$epoch:}${pkgver}-${pkgrel}-i686${PKGEXT}'; echo"
+      echo -en "\n${BLDYEL}==>${BLDWHI} ${MSG_32} ? ${MSG_yN} ${TXTRES}"
+      read res32
+      if [ "${res32,,}" == "$ANS_32" ]; then
+         MKPKGCMD="linux32 $MKPKGCMD"
+         PACKAGE="${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-i686${PKGEXT}"
+      fi
+      unset res32
    fi
 fi
 
-if [ "$archpkg" != "any" ]; then
+if [ -f "${PACKAGE}" ]; then
+   echo -e "\n${BLDRED}==> ${BLDYEL}${PACKAGE}"
+   echo -ne "${BLDRED}==>${BLDWHI} ${MSG_EX} ? ${MSG_yN} ${TXTRES}"
+   read bres
+   if [ "${bres,,}" == "$ANS_EX" ]; then
+      MKPKGCMD+="f"
+   else
+      MKPKGCMD=""
+   fi
+   unset bres
+fi
+
+if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ]; then
    for x in ${BUILDENV[@]}; do
       if [ "$x" == "ccache" ]; then
+         MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
          if [ -z "$CCACHE_DISABLE" ]; then
-            ccvar='&& export CCACHE_DISABLE=1 || unset CCACHE_DISABLE'
-            anscc="${ANS_TB[$ANNOP]}"
-            MSG_CC="${MSG_CC} ${MSG_Yn} ${TXTRES}"
+            echo -en "\n${MSG_CC} ${MSG_Yn} ${TXTRES}"
+            read cres
+            if [ "${cres,,}" == "${ANS_TB[$ANNOP]}" ]; then
+               export CCACHE_DISABLE=1
+            else
+               unset CCACHE_DISABLE
+            fi
          else
-            ccvar='&& unset CCACHE_DISABLE || export CCACHE_DISABLE=1'
-            anscc="${ANS_TB[$ANYES]}"
-            MSG_CC="${MSG_CC} ${MSG_yN} ${TXTRES}"
+            echo -en "\n${MSG_CC} ${MSG_yN} ${TXTRES}"
+            read cres
+            if [ "${cres,,}" == "${ANS_TB[$ANYES]}" ]; then
+               unset CCACHE_DISABLE
+            else
+               export CCACHE_DISABLE=1
+            fi
          fi
-         cmd="${cmd}echo -en '${MSG_CC}' ; read cres ; [ \"\${cres,,}\" == '$anscc' ] $ccvar ;"
+         unset cres
          break
       fi
    done
 fi
 
-cmd="echo ; ${pkgdef} ; if [ -f \"\${package}\" ]; then echo -e \"${BLDRED}==> ${BLDYEL}\${package}\" ; \
-   echo -ne '${MSG_EX}' ; read bres ; [ \"\${bres,,}\" == '$ANS_EX' ] && \
-      (${cmd} echo ; \${bit32}makepkg -fs) ; else (${cmd} echo ; \${bit32}makepkg -s) ; fi"
-
-
-if [ -n "$UPDSUMS" ]; then
-   cmd="echo; echo -ne '${MSG_US}'; read ures; [ \"\${ures,,}\" == '$ANS_US' ] && updpkgsums; ${cmd}"
+if [ -n "$MKPKGCMD" ]; then
+   $MKPKGCMD
 fi
 
 if [ -n "$GENSOURCE" ]; then
-   cmd="${cmd} ; echo ; echo -en '${MSG_SO}' ; read sres ; [ \"\${sres,,}\" == '$ANS_SO' ] && $MKSRCMD"
-fi
-
-
-if [ -n "$DEBUGMODE" ]; then
-   echo -e "$cmd"
-elif [ -z "$TERMODE" ]; then
-   eval "$cmd"
-else
-   xterm -fg gray -bg black -T "::: $NAME :::" -e "$cmd ; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
+   echo -en "\n${BLDYEL}==>${BLDWHI} ${MSG_SO} ? ${MSG_yN} ${TXTRES}"
+   read sres
+   if [ "${sres,,}" == "$ANS_SO" ]; then
+      $MKSRCMD
+   fi
+   unset sres
 fi
 
 
 [ -d src ] && rm -fr src
 [ -d pkg ] && rm -fr pkg
 
-if [ -n "$BUILDSHM" ]; then
-   rm -fr "$BUILDSHM"
-   rmdir &>/dev/null "$USERSHM"
-fi
-
 if [ -d "$BUILDDIR" ]; then
    [ -d "$BUILDDIR/${pkgname[0]}" ] && rm -fr "$BUILDDIR/${pkgname[0]}"
 fi
 
+
+# vim: set et sts=3 sw=3 ts=3 :
