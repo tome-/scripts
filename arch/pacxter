@@ -4,8 +4,8 @@
 ## Author:   grimi (grimi at poczta dot fm)
 ## About:    simple xterm "gui" for ArchLinux to installing packages
 ## License:  GNU GPL v3
-## Required: pacman,xterm,mime-archpkg
-## Optional: pacman-color,sudo
+## Required: pacman,xterm
+## Optional: sudo
 
 
 
@@ -23,14 +23,14 @@ case "${LANG%_*}" in
     MSG_PASSROOT="Podaj hasło roota: "
     MSG_PASS="Podaj hasło: "
     MSG_HIT="Naciśnij ::ENTER::"
-    MSG_USAGE="*** Składnia: $NAME [-t] <nazwa paczki> ***\n\t  -t: wykonaj w aktualnym terminalu\n"
+    MSG_USAGE="*** Składnia: $NAME [-t] <nazwa paczki> ***\n\t  -t: wykonaj w xterm\n"
     MSG_WAITPAC="Czekam na inny proces pacmana ...\n"
   ;;
   *)
     MSG_PASSROOT="Enter root password: "
     MSG_PASS="Enter password: "
     MSG_HIT="Press ::ENTER::"
-    MSG_USAGE="*** Usage: $NAME [-t] <package name> ***\n\t  -t: exec in current terminal\n"
+    MSG_USAGE="*** Usage: $NAME [-t] <package name> ***\n\t  -t: exec in xterm\n"
     MSG_WAITPAC="Waiting for another pacman process...\n"
   ;;
 esac
@@ -38,31 +38,28 @@ esac
 
 ## Current term mode ##
 if [ "$1" == "-t" ]; then
-   CURRTERM=1 && shift
+   exec $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $0 '$2' ; echo -e '\n$MSG_HIT' ; read"
 fi
 
 
 ## Checkout pacman running
-CMD="[ -f /var/lib/pacman/db.lck ] && echo -e ':: $MSG_WAITPAC' ; "
-CMD+="while pidof >/dev/null /usr/bin/pacman{,-color} ; do sleep 1 ; done ; "
+if [ -f /var/lib/pacman/db.lck ]; then
+    echo -e ":: $MSG_WAITPAC"
+    while (pidof >/dev/null /usr/bin/pacman); do
+        sleep 1
+    done
+fi
 
 ## Select proper action ##
 if [ -z "$1" ]; then
-   CMD+="echo -e '$MSG_USAGE'"
+   echo -e "$MSG_USAGE"
 elif [ "$USER" = "root" ]; then
-   CMD+="$PACMAN 2>&1 -U '$1'"
+   $PACMAN 2>&1 -U "$1"
 elif [ "$($SUDO 2>/dev/null -n -l -U $USER $PACMAN -U)" = "$PACMAN -U" ]; then
-   CMD+="$SUDO -p '$MSG_PASS' $PACMAN 2>&1 -U '$1'"
+   $SUDO -p "$MSG_PASS" $PACMAN 2>&1 -U "$1"
 else
-   CMD+="echo -n '$MSG_PASSROOT' ; /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'"
-fi
-
-
-## Finaly do what you must do ... ##
-if [ -n "$CURRTERM" ]; then
-   eval "$CMD"
-else
-   $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $CMD ; echo -e '\n$MSG_HIT' ; read"
+   echo -n "$MSG_PASSROOT"
+   /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'
 fi
 
 

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Install package
 Name[pl]=Instaluj paczkę
-Exec=pacxter %f
+Exec=pacxter -t %f
 Terminal=false
 Type=Application
 Icon=application-x-archpkg

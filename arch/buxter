@@ -2,7 +2,8 @@
 # name:    buxter
 # author:  grimi
 # abot:    build ArchLinux pkg from fm menu
-# require: makepkg,updpkgsums (parts of pacman),xterm
+# require: makepkg & updpkgsums (parts of pacman)
+# require: grep, wc (part of coreutils), xterm
 
 
 BLDRED='\e[1;31m'
@@ -18,6 +19,8 @@ ANNOP=1
 MKPKGCMD="makepkg -s"
 MKSRCMD="makepkg -Sf"
 UPDSUMCMD="updpkgsums"
+
+PKGBUILDNAME="PKGBUILD"
 
 ARGSLINE=""
 
@@ -95,8 +98,7 @@ fi
 
 
 if [ -n "$TERMODE" ]; then
-   xterm -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
-   exit 0
+   exec xterm -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
 fi
 
 
@@ -105,10 +107,14 @@ if [ -n "$SHOWUSAGE" ]; then
 fi
 
 
-if [ ! -f PKGBUILD ]; then
-   if [ -z "$1" ] || [ "${1##*/}" != "PKGBUILD" ]; then
+if [ -z "$1" ]; then
+   if [ ! -f PKGBUILD ]; then
+      usage
+   elif [ $(grep -w  -e "pkgname=.*" -e "pkgver=.*" -e "pkgrel=.*" "$1"|wc -l) -ne 3 ]; then
       usage
    fi
+else
+   PKGBUILDNAME="${1##*/}"
 fi
 
 
@@ -121,7 +127,7 @@ if [ "${1%/*}" != "$1" ]; then
    cd "${1%/*}"
 fi
 
-source PKGBUILD
+source "$PKGBUILDNAME"
 
 if [ "${arch[0]}" = "any" ]; then
    ARCHPKG="any"
