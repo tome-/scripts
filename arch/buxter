@@ -21,7 +21,7 @@ MKPKGCMD="makepkg -s"
 MKSRCMD="makepkg -Sf"
 UPDSUMCMD="updpkgsums"
 
-PKGBUILDNAME="PKGBUILD"
+PKGBNAME="PKGBUILD"
 
 ARGSLINE=""
 
@@ -107,15 +107,17 @@ if [ -n "$SHOWUSAGE" ]; then
    usage
 fi
 
-
 if [ -z "$1" ]; then
    if [ ! -f PKGBUILD ]; then
       usage
-   elif [ $(grep -w  -e "pkgname=.*" -e "pkgver=.*" -e "pkgrel=.*" "$1"|wc -l) -ne 3 ]; then
-      usage
    fi
 else
-   PKGBUILDNAME="${1##*/}"
+   PKGBNAME="$1"
+fi
+
+
+if [ $(grep -w  -e "pkgname=.*" -e "pkgver=.*" -e "pkgrel=.*" "$PKGBNAME"|wc -l) -ne 3 ]; then
+   usage
 fi
 
 
@@ -124,11 +126,11 @@ if [ -f ~/.makepkg.conf ]; then
    source ~/.makepkg.conf
 fi
 
-if [ "${1%/*}" != "$1" ]; then
-   cd "${1%/*}"
+if [ "${PKGBNAME%/*}" != "$PKGBNAME" ]; then
+   cd "${PKGBNAME%/*}"
 fi
 
-source "$PKGBUILDNAME"
+source "$PKGBNAME"
 
 if [ "${arch[0]}" = "any" ]; then
    ARCHPKG="any"
