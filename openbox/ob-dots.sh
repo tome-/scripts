@@ -22,8 +22,12 @@ set -o nounset                              # Treat unset variables as an error
 
 EDITOR="xterm -g 100x30 -e vim"
 
-DOTS=(bashrc xinitrc Xdefaults Xresources xprofile xsession vimrc asoundrc conkyrc tmux.conf)
-BINS="${XDG_DATA_HOME:-$HOME/.local/share}/bin"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xprofile .xsession .vimrc .asoundrc .conkyrc .tmux.conf \
+      "$CONF/mpd/mpd.conf")
+BINS="$DATA/bin"
+
 
 SUBDMENU=0
 SHOWBINS=1
@@ -64,7 +68,11 @@ dots() {
       echo " <separator label=\"empty\"/>"
    else
       for f in ${DOTS[@]}; do
-         [[ -f $HOME/.$f ]] && item "$HOME/.$f"
+         if [[ ${f##*/} == $f ]]; then
+            [[ -f $HOME/$f ]] && item "$HOME/$f"
+         else
+            [[ -f $f ]] && item "$f"
+         fi
       done
    fi
    if [ "$SUBDMENU" == 1 ]; then
@@ -108,4 +116,5 @@ main() {
 ### run main function ###
 main
 
+# vim:set ts=3 sw=3 sts=3 et:
 
