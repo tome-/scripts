@@ -61,10 +61,10 @@ item() {
 
 dots() {
    local f
-   if [ "$SUBDMENU" == 1 ]; then
+   if [[ $SUBDMENU == 1 ]]; then
       echo "<menu id=\"ob-dots-menu\" label=\"scripts\">"
    fi
-   if [ ${#DOTS[@]} -eq 0 ]; then
+   if [[ ${#DOTS[@]} -eq 0 ]]; then
       echo " <separator label=\"empty\"/>"
    else
       for f in ${DOTS[@]}; do
@@ -75,7 +75,7 @@ dots() {
          fi
       done
    fi
-   if [ "$SUBDMENU" == 1 ]; then
+   if [[ $SUBDMENU == 1 ]]; then
       echo "</menu>"
    fi
 }
@@ -106,7 +106,7 @@ main() {
    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
    echo "<openbox_pipe_menu>"
    dots
-   if [ "$SHOWBINS" == 1 ]; then
+   if [[ $SHOWBINS == 1 ]]; then
       bins
    fi
    echo "</openbox_pipe_menu>"
