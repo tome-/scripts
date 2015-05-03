@@ -41,7 +41,7 @@ autostart() {
                { grep -iwq "notshowin=.*$DESK" "$app" || auto=1; }
          fi
          if [ -n "$auto" ]; then
-            cmd="$(grep -i 'exec=' "$app")"
+            cmd="$(grep -i 'exec=' "$app"|grep -vi 'tryexec=')"
             if [ -n "$TESTMODE" ]; then
                (( nr++ ))
                echo -e "$nr) $app:\n\t ==> ${cmd:5}"
@@ -71,7 +71,7 @@ runmode() {
    fi
 
    if [ -f "$file" ]; then
-      cmd="$(grep -m 1 -i 'exec=' "$file")"
+      cmd="$(grep -i 'exec=' "$file"|grep -vi 'tryexec=')"
       cmd="${cmd:5}" ; cmd="${cmd%%\%*}"
       if [ -n "$TESTMODE" ]; then
          echo -e "${file##*/}:\n\t ==> ${cmd}"

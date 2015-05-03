@@ -122,8 +122,10 @@ fi
 
 
 source /etc/makepkg.conf
-if [ -f ~/.makepkg.conf ]; then
-   source ~/.makepkg.conf
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf" ]; then
+   source "${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf"
+elif [ -f "$HOME/.makepkg.conf" ]; then
+   source "$HOME/.makepkg.conf"
 fi
 
 if [ "${PKGBNAME%/*}" != "$PKGBNAME" ]; then
