@@ -1,0 +1,262 @@
+#!/bin/bash
+# Name:     wmstartup
+# About:    bash manager for autostart some cmd/apps in wm
+# Author:   grimi <grimi at poczta dot fm>
+# License:  GNU GPL v3
+
+set +o noclobber
+
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/${0##*/}.conf"
+
+INFO_MASK=0
+INFO_NAME=1
+INFO_TIME=2
+INFO_CMD=3
+INFO_EXIST=4
+INFO_BACK=5
+
+MASK=
+NAME=""
+DELAY=
+CMDLINE=""
+EXIST=
+
+MODE=""
+SAVE=
+DRYMODE=0
+POSITION=
+BACKGR=
+
+
+error() {
+   echo "$1"
+   exit 1
+}
+
+usage() {
+   # $1 != "" => full msg
+   echo "USAGE: [-adcv <name>] [-e <cmdln>] [-t <sec>] [-p <pos>] [-muxybn] [-lszh] [-f <conf>]"
+   if [[ $1 ]]; then
+      echo "      -a:   add new cmd to startup"
+      echo "      -d:   del cmd from startup"
+      echo "      -c:   change some parameters"
+      echo "      -v:   view cmd details saved in conf"
+      echo "      -e:   optional command line with args (default = name is used)"
+      echo "      -t:   delay before start in sec (default = 0)"
+      echo "      -p:   set position of cmd [0..x]"
+      echo "      -m:   mask cmd in conf"
+      echo "      -u:   unmask cmd in conf (default)"
+      echo "      -x:   check if cmd already running, before start"
+      echo "      -y:   don't check if cmd is run, before start"
+      echo "      -b:   run background (default)"
+      echo "      -n:   run normal (wait for cmd)"
+      echo "      -l:   list cmds saved in conf"
+      echo "      -s:   startup mode, launch cmds"
+      echo "      -z:   dry mode, show commands to startup"
+      echo "      -f:   custom config file"
+      echo "      -h:   this message"
+   fi
+   error
+}
+
+add() {
+   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
+   local skip=0 IFS=":" tab=()
+   while [[ $i -lt $j ]]; do
+      tab=(${WMSTARTUPTAB[$i]})
+      if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
+         skip=1
+         break
+      fi
+      let i+=1
+   done
+   if [[ $skip -eq 0 ]]; then
+      IFS="$oldifs"
+      # mask:name:time:cmd:exist
+      WMSTARTUPTAB[$j]="${MASK:-0}:$NAME:${DELAY:-0}:${CMDLINE:-$NAME}:${EXIST:-0}:${BACKGR:-1}"
+      if [[ $POSITION && $POSITION -ge 0 ]]; then
+         position "$j"
+      fi
+   else
+      error "'$NAME' is already added!"
+   fi
+}
+
+delete() {
+   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
+   local IFS=":" tab=() skip=0
+   while [[ $i -lt $j ]]; do
+      tab=(${WMSTARTUPTAB[$i]})
+      if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
+         skip=1
+         break
+      fi
+      let i+=1
+   done
+   if [[ $skip -eq 1 ]]; then
+      IFS="$oldifs"
+      unset WMSTARTUPTAB[$i]
+      WMSTARTUPTAB=("${WMSTARTUPTAB[@]}")
+   else
+      error "'$NAME' not present!"
+   fi
+}
+
+change() {
+   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
+   local IFS=":" tab=() skip=0
+   while [[ $i -lt $j ]]; do
+      tab=(${WMSTARTUPTAB[$i]})
+      if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
+         skip=1
+         [[ -z $MASK ]] && MASK="${tab[$INFO_MASK]}"
+         [[ -z $DELAY ]] && DELAY="${tab[$INFO_TIME]}"
+         [[ -z $CMDLINE ]] && CMDLINE="${tab[$INFO_CMD]}"
+         [[ -z $EXIST ]] && EXIST="${tab[$INFO_EXIST]}"
+         [[ -z $BACKGR ]] && BACKGR="${tab[$INFO_BACK]}"
+         break
+      fi
+      let i+=1
+   done
+   if [[ $skip -eq 1 ]]; then
+      IFS="$oldifs"
+      # mask:name:time:cmd:exist:backgr
+      WMSTARTUPTAB[$i]="$MASK:$NAME:$DELAY:${CMDLINE:-$NAME}:$EXIST:$BACKGR"
+      if [[ $POSITION && $POSITION -ge 0 ]]; then
+         position "$i"
+      fi
+   else
+      error "'$NAME' not present!"
+   fi
+}
+
+position() {
+   # $1 = required actual position
+   [[ $1 ]] || return
+   local i=0 k=0 item="${WMSTARTUPTAB[$1]}"
+   local j=${#WMSTARTUPTAB[@]} tab=()
+   let local l=$j-1
+   if [[ $item ]]; then
+      [[ $POSITION -gt $l ]] && POSITION=$l
+      unset WMSTARTUPTAB[$1]
+      tab=("${WMSTARTUPTAB[@]}")
+      WMSTARTUPTAB=()
+      while [[ $i -lt $j ]]; do
+         if [[ $POSITION -eq $i ]]; then
+            WMSTARTUPTAB[$i]="$item"
+         else
+            WMSTARTUPTAB[$i]="${tab[$k]}"
+            let k+=1
+         fi
+         let i+=1
+      done
+   fi
+}
+
+list() {
+   local j=${#WMSTARTUPTAB[@]} i=0 xs=(x " ")
+   local IFS=":" tab=() ny=(no yes)
+   while [[ $i -lt $j ]]; do
+      tab=(${WMSTARTUPTAB[$i]})
+      if [[ $NAME && $NAME != ${tab[$INFO_NAME]} ]]; then
+         let i+=1
+         continue
+      fi
+      if [[ -z $NAME ]]; then
+         printf "%2d. [%s] %s\n" $i ${xs[${tab[$INFO_MASK]}]} ${tab[$INFO_NAME]}
+      else
+         echo "${tab[$INFO_NAME]}:"
+         echo "    masked:    ${ny[${tab[$INFO_MASK]}]}"
+         echo "    position:  $i"
+         echo "    cmdline:   ${tab[$INFO_CMD]}"
+         echo "    delay:     ${tab[$INFO_TIME]}s"
+         echo "    checkrun:  ${ny[${tab[$INFO_EXIST]}]}"
+         echo "    runback:   ${ny[${tab[$INFO_BACK]}]}"
+         break
+      fi
+      let i+=1
+   done
+}
+
+startup() {
+   local i=0 j=${#WMSTARTUPTAB[@]}
+   local IFS=":" tab=() cmd=
+   while [[ $i -lt $j ]]; do
+      tab=(${WMSTARTUPTAB[$i]}) cmd=""
+      if [[ ${tab[$INFO_MASK]} -eq 0 ]]; then
+         if [[ ${tab[$INFO_TIME]} -gt 0 ]]; then
+            cmd="sleep ${tab[$INFO_TIME]} && "
+         fi
+         if [[ ${tab[$INFO_BACK]} -eq 1 ]]; then
+            cmd="{ ${cmd}(${tab[$INFO_CMD]}&); }&"
+         else
+            cmd="{ ${cmd}${tab[$INFO_CMD]}; }"
+         fi
+         if [[ $DRYMODE -eq 1 ]]; then
+            echo "$cmd"
+         else
+            if [[ ${tab[$INFO_EXIST]} -eq 1 ]]; then
+               if [[ $(pidof ${tab[$INFO_CMD]%% *}) ]]; then
+                  cmd=""
+               fi
+            fi
+            eval "$cmd"
+         fi
+      fi
+      let i+=1
+   done
+}
+
+save() {
+   local out j=${#WMSTARTUPTAB[@]} i=0
+   out="# wmstartup config file, please do not edit !!!\n"
+   out+="WMSTARTUPTAB=()\n"
+   while [[ $i -lt $j ]]; do
+      out+="WMSTARTUPTAB+=('${WMSTARTUPTAB[$i]}')\n"
+      let i+=1
+   done
+   echo -en "$out" > "$CONFIG"
+}
+
+
+while getopts "a:d:c:v:e:t:p:muxybnlszhf:" opt; do
+   case "$opt" in
+      a)  NAME="$OPTARG"; MODE="add"; SAVE=1 ;;
+      d)  NAME="$OPTARG"; MODE="delete"; SAVE=1 ;;
+      c)  NAME="$OPTARG"; MODE="change"; SAVE=1 ;;
+      v)  NAME="$OPTARG"; MODE="list" ;;
+      e)  CMDLINE="$OPTARG" ;;
+      t)  DELAY="$OPTARG" ;;
+      p)  POSITION="$OPTARG" ;;
+      m)  MASK=1 ;;
+      u)  MASK=0 ;;
+      x)  EXIST=1 ;;
+      y)  EXIST=0 ;;
+      b)  BACKGR=1 ;;
+      n)  BACKGR=0 ;;
+      l)  MODE="list" ;;
+      s)  MODE="startup" ;;
+      z)  DRYMODE=1; MODE="startup" ;;
+      h)  usage "1" ;;
+      f)  CONFIG="$OPTARG" ;;
+   esac
+done
+
+
+ if [[ -f $CONFIG ]]; then
+   source "$CONFIG"
+else
+   WMSTARTUPTAB=()
+fi
+
+
+if [[ $MODE ]]; then
+   eval $MODE
+   if [[ $SAVE -eq 1 ]]; then
+      save
+   fi
+else
+   usage
+fi
+
