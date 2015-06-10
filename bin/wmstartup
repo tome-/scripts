@@ -61,15 +61,15 @@ usage() {
 }
 
 add() {
-   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
-   local skip=0 IFS=":" tab=()
+   local -i i=0 j=${#WMSTARTUPTAB[@]} skip=0
+   local oldifs="$IFS" IFS=":" tab=()
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]})
       if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
          skip=1
          break
       fi
-      let i+=1
+      i+=1
    done
    if [[ $skip -eq 0 ]]; then
       IFS="$oldifs"
@@ -84,15 +84,15 @@ add() {
 }
 
 delete() {
-   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
-   local IFS=":" tab=() skip=0
+   local -i i=0 j=${#WMSTARTUPTAB[@]} skip=0
+   local oldifs="$IFS" IFS=":" tab=()
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]})
       if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
          skip=1
          break
       fi
-      let i+=1
+      i+=1
    done
    if [[ $skip -eq 1 ]]; then
       IFS="$oldifs"
@@ -104,8 +104,8 @@ delete() {
 }
 
 change() {
-   local i=0 j=${#WMSTARTUPTAB[@]} oldifs="$IFS"
-   local IFS=":" tab=() skip=0
+   local -i i=0 j=${#WMSTARTUPTAB[@]} skip=0
+   local oldifs="$IFS" IFS=":" tab=()
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]})
       if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
@@ -117,7 +117,7 @@ change() {
          [[ -z $BACKGR ]] && BACKGR="${tab[$INFO_BACK]}"
          break
       fi
-      let i+=1
+      i+=1
    done
    if [[ $skip -eq 1 ]]; then
       IFS="$oldifs"
@@ -134,9 +134,9 @@ change() {
 position() {
    # $1 = required actual position
    [[ $1 ]] || return
-   local i=0 k=0 item="${WMSTARTUPTAB[$1]}"
-   local j=${#WMSTARTUPTAB[@]} tab=()
-   let local l=$j-1
+   local item="${WMSTARTUPTAB[$1]}" tab=()
+   local -i j=${#WMSTARTUPTAB[@]}
+   local -i i=0 k=0 l=$j-1
    if [[ $item ]]; then
       [[ $POSITION -gt $l ]] && POSITION=$l
       unset WMSTARTUPTAB[$1]
@@ -147,20 +147,20 @@ position() {
             WMSTARTUPTAB[$i]="$item"
          else
             WMSTARTUPTAB[$i]="${tab[$k]}"
-            let k+=1
+            k+=1
          fi
-         let i+=1
+         i+=1
       done
    fi
 }
 
 list() {
-   local j=${#WMSTARTUPTAB[@]} i=0 xs=(x " ")
-   local IFS=":" tab=() ny=(no yes)
+   local -i j=${#WMSTARTUPTAB[@]} i=0
+   local IFS=":" tab=() ny=(no yes) xs=(x " ")
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]})
       if [[ $NAME && $NAME != ${tab[$INFO_NAME]} ]]; then
-         let i+=1
+         i+=1
          continue
       fi
       if [[ -z $NAME ]]; then
@@ -175,12 +175,12 @@ list() {
          echo "    runback:   ${ny[${tab[$INFO_BACK]}]}"
          break
       fi
-      let i+=1
+      i+=1
    done
 }
 
 startup() {
-   local i=0 j=${#WMSTARTUPTAB[@]}
+   local -i i=0 j=${#WMSTARTUPTAB[@]}
    local IFS=":" tab=() cmd=
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]}) cmd=""
@@ -204,17 +204,17 @@ startup() {
             eval "$cmd"
          fi
       fi
-      let i+=1
+      i+=1
    done
 }
 
 save() {
-   local out j=${#WMSTARTUPTAB[@]} i=0
-   out="# wmstartup config file, please do not edit !!!\n"
+   local -i j=${#WMSTARTUPTAB[@]} i=0
+   local out="# wmstartup config file, please do not edit !!!\n"
    out+="WMSTARTUPTAB=()\n"
    while [[ $i -lt $j ]]; do
       out+="WMSTARTUPTAB+=('${WMSTARTUPTAB[$i]}')\n"
-      let i+=1
+      i+=1
    done
    echo -en "$out" > "$CONFIG"
 }
