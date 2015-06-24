@@ -50,7 +50,7 @@ usage() {
       echo "      -x:   check if cmd already running, before start"
       echo "      -y:   don't check if cmd is run, before start"
       echo "      -b:   run background (default)"
-      echo "      -n:   run normal (wait for cmd)"
+      echo "      -n:   run normal (wait for cmd), if delay no set"
       echo "      -l:   list cmds saved in conf"
       echo "      -s:   startup mode, launch cmds"
       echo "      -z:   dry mode, show commands to startup"
@@ -115,6 +115,7 @@ change() {
          [[ -z $CMDLINE ]] && CMDLINE="${tab[$INFO_CMD]}"
          [[ -z $EXIST ]] && EXIST="${tab[$INFO_EXIST]}"
          [[ -z $BACKGR ]] && BACKGR="${tab[$INFO_BACK]}"
+         [[ $DELAY -gt 0 ]] && BACKGR=1
          break
       fi
       i+=1
