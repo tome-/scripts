@@ -177,7 +177,7 @@ if [ -f "${PACKAGE}" ]; then
    unset bres
 fi
 
-if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ]; then
+if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ] && [ -x /usr/bin/ccache ]; then
    for x in ${BUILDENV[@]}; do
       if [ "$x" == "ccache" ]; then
          MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
