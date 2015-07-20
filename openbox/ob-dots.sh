@@ -24,8 +24,8 @@ EDITOR="xterm -g 100x30 -e vim"
 
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xprofile .xsession .vimrc .asoundrc .conkyrc .tmux.conf \
-      "$CONF/mpd/mpd.conf")
+DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xprofile .xsession .vimrc .asoundrc .tmux.conf \
+      .bash_profile "$CONF/conky/conky.conf" "$CONF/mpd/mpd.conf")
 BINS="$DATA/bin"
 
 
@@ -51,9 +51,10 @@ fi
 
 item() {
    # $1 = script
-   echo " <item label=\"${1##*/}\">"
+   local t="${1##*/}"
+   echo " <item label=\"${t//_/__}\">"
    echo "  <action name=\"Execute\">"
-   echo "   <execute>$EDITOR \"$1\"</execute>"
+   echo "   <execute><![CDATA[$EDITOR \"$1\"]]></execute>"
    echo "  </action>"
    echo " </item>"
 }

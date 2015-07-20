@@ -25,7 +25,7 @@ NICON="/usr/share/icons/gnome/32x32/devices/"
 NISUFF=".png"
 SHOWPARTS=1
 SHOWSYSPARTS=0
-MFOLDER="$([[ $UDMTYPE == [2-3] ]] && echo "/run/media/$USER" || echo "/media")"
+MFOLDER="$([[ $UDMTYPE == 2 ]] && echo "/run/media/$USER" || echo "/media")"
 PARTLETTER=
 # ----------------------------------------------------------
 
