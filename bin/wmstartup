@@ -29,14 +29,16 @@ POSITION=
 BACKGR=
 
 
+
+
 error() {
-   echo "$1"
+   echo "$1" 1>&2
    exit 1
 }
 
 usage() {
    # $1 != "" => full msg
-   echo "USAGE: [-adcv <name>] [-e <cmdln>] [-t <sec>] [-p <pos>] [-muxybn] [-lszh] [-f <conf>]"
+   echo "USAGE: [-adcv <name|pos>] [-e <cmdln>] [-t <sec>] [-p <pos>] [-muxybn] [-lszh] [-f <conf>]"
    if [[ $1 ]]; then
       echo "      -a:   add new cmd to startup"
       echo "      -d:   del cmd from startup"
@@ -58,6 +60,18 @@ usage() {
       echo "      -h:   this message"
    fi
    error
+}
+
+ispos() {
+   local tab=() IFS=":"
+   if [[ $NAME =~ ^[0-9]+$ ]]; then
+      if [[ $NAME -gt ${#WMSTARTUPTAB[@]} ]]; then
+         error "number '$NAME' is out of list range!"
+      else
+         tab=(${WMSTARTUPTAB[$NAME]})
+         NAME="${tab[$INFO_NAME]}"
+      fi
+   fi
 }
 
 add() {
@@ -252,6 +266,7 @@ else
 fi
 
 if [[ $MODE ]]; then
+   ispos
    eval $MODE
    if [[ $SAVE -eq 1 ]]; then
       save
