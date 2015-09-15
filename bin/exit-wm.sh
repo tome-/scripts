@@ -32,6 +32,8 @@ case ${LANG%.*} in
 esac
 
 
+#ZENDIM="--width 320 --height 260"
+
 WMTAB=("openbox:openbox --exit")
 
 NAME="${0##*/}"
@@ -68,24 +70,11 @@ killwm() {
 }
 
 
-kill4user() {
-  if [ $TEST == 1 ]; then
-    echo ">>> in kill4user"
-  else
-    if [ "$USER" != "root" ]; then
-      ps --user $USER | grep -Ev "ssh|tmux|PID" | cut -b1-5 | xargs -t pkill -SIGKILL
-      #pkill -SIGKILL -u $USER
-    fi
-  fi
-}
-
-
 haltsys() {
   local PTAB=()
   if [ -n "$(type -pf pkaction)" ] && [ -n "$(type -pf systemctl)" ]; then
-    PTAB=($(pkaction|grep -e "org.freedesktop.login$XDG_SESSION_ID.power-off"))
+    PTAB=($(pkaction|grep -e "org.freedesktop.login1.power-off"))
   fi
-  (sleep 0.5 && kill4user)&
   if [ ${#PTAB[@]} != 0 ] && [ "${PTAB[0]##*.}" == "power-off" ]; then
     if [ $TEST == 1 ]; then
       echo "systemctl poweroff"
@@ -111,9 +100,8 @@ haltsys() {
 rebootsys() {
   local PTAB=()
   if [ -n "$(type -pf pkaction)" ] && [ -n "$(type -pf systemctl)" ]; then
-    PTAB=($(pkaction|grep -e "org.freedesktop.login$XDG_SESSION_ID.reboot"))
+    PTAB=($(pkaction|grep -e "org.freedesktop.login1.reboot"))
   fi
-  (sleep 0.5 && kill4user)&
   if [ ${#PTAB[@]} != 0 ] && [ "${PTAB[0]##*.}" == "reboot" ]; then
     if [ $TEST == 1 ]; then
       echo "systemctl reboot"
@@ -137,7 +125,7 @@ rebootsys() {
 
 
 if [ -n "$ZENITY" ]; then
-  OPTIO="$(zenity --title "$NAME" --text "$MESG" --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
+  OPTIO="$(zenity --title "$NAME" --text "$MESG" $ZENDIM --list --radiolist --column "$MSEL" --column "$MOPT" TRUE "$LOGO" FALSE "$REST" FALSE "$HALT")"
 elif [ -n "$XDIALOG" ]; then
   OPTIO="$(Xdialog --stdout --no-tags --title "$NAME" --radiolist "$MESG" 14 43 9  "$LOGO" "$LOGO" ON "$REST" "$REST" OFF "$HALT" "$HALT" OFF)"
 else
@@ -146,6 +134,8 @@ else
   OPTIO="$(</dev/shm/exit-wm.cmd)"
   rm -f /dev/shm/exit-wm.cmd
 fi
+
+cd /
 
 case "$OPTIO" in
   "$LOGO")  killwm ;;

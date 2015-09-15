@@ -30,7 +30,6 @@ BACKGR=
 
 
 
-
 error() {
    echo "$1" 1>&2
    exit 1
@@ -259,7 +258,7 @@ while getopts "a:d:c:v:e:t:p:muxybnlszhf:" opt; do
 done
 
 
- if [[ -f $CONFIG ]]; then
+if [[ -f $CONFIG ]]; then
    source "$CONFIG"
 else
    WMSTARTUPTAB=()
