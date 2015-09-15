@@ -1,0 +1,112 @@
+#!/bin/bash
+# name:    auru
+# author:  grimi <grimi at poczta dot fm>
+# about:   upload packages to AUR
+# license: GNU GPL v3↲
+
+
+
+function aurup() {
+
+   if [[ ! -f PKGBUILD ]]; then
+      echo "no PKGBUILD! in '$(pwd)'"
+      return 1
+   fi
+
+   source PKGBUILD
+
+   declare -a xarray
+   declare -i x=0
+   declare -a garray
+   declare name="${pkgbase:-$pkgname}"
+   declare aur="aur@aur.archlinux.org"
+   declare -i ij
+   declare i
+
+   if [[ $install ]]; then
+      xarray[$x]="$install"
+      x+=1
+   fi
+
+   for i in ${source[@]}; do
+      if [[ $i != "SKIP" && $i == "$(basename $i)" ]]; then
+         xarray[$x]="$i"
+         x+=1
+      fi
+   done
+
+   mksrcinfo
+
+   if [[ ! -d .git ]]; then
+      if [[ $(ssh $aur list-repos|grep $name|sed 's/^ //') != $name ]]; then
+         ssh $aur setup-repo "$name"
+      fi
+      git clone ssh://$aur/$name.git/ git/
+      if [[ -d git/.git ]]; then
+         mv git/.git ./
+         rmdir git
+      else
+         echo "Problem with cloning ..."
+         return 1
+      fi
+   fi
+
+   garray=($(git ls-files))
+
+   if [[ ${#garray[@]} -eq 0 ]]; then
+      git add PKGBUILD .SRCINFO
+      git add ${xarray[@]}
+      git commit -m "Initial commit"
+      git push origin master
+   else
+      for j in ${garray[@]}; do
+         if [[ $j == "PKGBUILD" || $j == ".SRCINFO" ]]; then
+            continue
+         fi
+         ij=0
+         for i in ${xarray[@]}; do
+            if [[ $i == $j ]]; then
+               ij=1
+            fi
+         done
+         if [[ $ij -eq 0 ]]; then
+            git rm "$j"
+         fi
+      done
+      for i in ${xarray[@]}; do
+         for j in ${garray[@]}; do
+            ij=1
+            if [[ $i == $j ]]; then
+               ij=0
+               break
+            fi
+         done
+         if [[ $ij -eq 1 ]]; then
+            git add "$i"
+         fi
+      done
+      git commit -a
+      git push
+   fi
+   return 0
+}
+
+
+if [[ -z $1 ]]; then
+   aurup
+elif [[ $1 = "-h" ]]; then
+   echo "USAGE: <folder[s] with PKGBUILD>"
+else
+   sdir="$(pwd)"
+   for x in "$@"; do
+      if [[ -d $x ]]; then
+         cd "$x"
+      else
+         cd "$(dirname $x)"
+      fi
+      aurup
+      cd "$sdir"
+   done
+fi
+
+
