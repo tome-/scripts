@@ -5,7 +5,6 @@
 # license: GNU GPL v3↲
 
 
-
 function aurup() {
 
    if [[ ! -f PKGBUILD ]]; then
@@ -56,7 +55,7 @@ function aurup() {
    if [[ ${#garray[@]} -eq 0 ]]; then
       git add PKGBUILD .SRCINFO
       git add ${xarray[@]}
-      git commit -m "Initial commit"
+      git commit -e -m "Initial commit"
       git push origin master
    else
       for j in ${garray[@]}; do
@@ -85,7 +84,11 @@ function aurup() {
             git add "$i"
          fi
       done
-      git commit -a
+      if [[ $pkgrel -eq 1 ]]; then
+         git commit -a -e -m "Upstream: $pkgver"
+      else
+         git commit -a -e -m "Fixed: "
+      fi
       git push
    fi
    return 0
