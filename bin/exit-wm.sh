@@ -81,17 +81,14 @@ haltsys() {
     else
       systemctl poweroff
     fi
-  elif [ -n "$(sudo -n -l poweroff)" ]; then
+  else
     if [ $TEST == 1 ]; then
       echo "sudo poweroff"
     else
-      sudo poweroff
-    fi
-  elif [ -n "$(sudo -n -l shutdown -h now)" ]; then
-    if [ $TEST == 1 ]; then
-      echo "sudo shutdown -h now"
-    else
-      sudo shutdown -h now
+      sudo -n poweroff
+      if [ $? -ne 0 ]; then
+        sudo shutdown -h now
+      fi
     fi
   fi
 }
@@ -108,17 +105,14 @@ rebootsys() {
     else
       systemctl reboot
     fi
-  elif [ -n "$(sudo -n -l reboot)" ]; then
+  else
     if [ $TEST == 1 ]; then
       echo "sudo reboot"
     else
-      sudo reboot
-    fi
-  elif [ -n "$(sudo -n -l shutdown -r now)" ]; then
-    if [ $TEST == 1 ]; then
-      echo "sudo shutdown -r now"
-    else
-      sudo shutdown -r now
+      sudo -n reboot
+      if [ $? -ne 0 ]; then
+        sudo -n shutdown -r now
+      fi
     fi
   fi
 }
