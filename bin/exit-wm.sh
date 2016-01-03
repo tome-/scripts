@@ -87,7 +87,7 @@ haltsys() {
     else
       sudo -n poweroff
       if [ $? -ne 0 ]; then
-        sudo shutdown -h now
+        sudo -n shutdown -h now
       fi
     fi
   fi
