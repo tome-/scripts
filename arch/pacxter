@@ -37,31 +37,31 @@ esac
 
 
 ## Current term mode ##
-if [ "$1" == "-t" ]; then
-   exec $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $0 '$2' ; echo -e '\n$MSG_HIT' ; read"
+if [[ $1 == "-t" ]]; then
+  exec $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $0 '$2' ; echo -e '\n$MSG_HIT' ; read"
 fi
 
 
 ## Checkout pacman running
-if [ -f /var/lib/pacman/db.lck ]; then
-    echo -e ":: $MSG_WAITPAC"
-    while (pidof >/dev/null /usr/bin/pacman); do
-        sleep 1
-    done
+if [[ -f /var/lib/pacman/db.lck ]]; then
+  echo -e ":: $MSG_WAITPAC"
+  while (pidof >/dev/null /usr/bin/pacman); do
+    sleep 1
+  done
 fi
 
 ## Select proper action ##
-if [ -z "$1" ]; then
-   echo -e "$MSG_USAGE"
-elif [ "$USER" = "root" ]; then
-   $PACMAN 2>&1 -U "$1"
-elif [ "$($SUDO 2>/dev/null -n -l -U $USER $PACMAN -U)" = "$PACMAN -U" ]; then
-   $SUDO -p "$MSG_PASS" $PACMAN 2>&1 -U "$1"
+if [[ -z $1 ]]; then
+  echo -e "$MSG_USAGE"
+elif [[ $USER == "root" ]]; then
+  $PACMAN 2>&1 -U "$1"
+elif [[ $(($SUDO -v && $SUDO -n -l -U $USER $PACMAN -U) 2>/dev/null) == "$PACMAN -U" ]]; then
+  $SUDO -p "$MSG_PASS" $PACMAN 2>&1 -U "$1"
 else
-   echo -n "$MSG_PASSROOT"
-   /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'
+  echo -n "$MSG_PASSROOT"
+  /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'
 fi
 
 
-## End of pacxter ##
+# vim:set ts=2 sw=2 sts=2 et:
 
