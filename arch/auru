@@ -43,6 +43,7 @@ function aurup() {
       git clone ssh://$aur/$name.git/ git/
       if [[ -d git/.git ]]; then
          mv git/.git ./
+         rm git/*
          rmdir git
       else
          echo "Problem with cloning ..."
@@ -97,7 +98,7 @@ function aurup() {
 
 if [[ -z $1 ]]; then
    aurup
-elif [[ $1 = "-h" ]]; then
+elif [[ $1 == "-h" || $1 == "--help" ]]; then
    echo "USAGE: <folder[s] with PKGBUILD>"
 else
    sdir="$(pwd)"

@@ -25,7 +25,8 @@ EDITOR="xterm -g 100x30 -e vim"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xprofile .xsession .vimrc .asoundrc .tmux.conf \
-      .bash_profile "$CONF/conky/conky.conf" "$CONF/mpd/mpd.conf" "$CONF/pacman/makepkg.conf")
+      .bash_profile "$CONF/fontconfig/fonts.conf" "$CONF/conky/conky.conf" "$CONF/mpd/mpd.conf" \
+      "$CONF/pacman/makepkg.conf")
 BINS="$DATA/bin"
 
 
@@ -84,7 +85,7 @@ dots() {
 
 bins() {
    local mb=${#BINSTAB[@]} l="===&gt;"
-   if [[ $mb -gt 0 ]]; then
+   if [[ $mb -gt 0 && $mb -gt $IBIN ]]; then
       if [[ $IBIN -eq 0 ]]; then
          echo " <separator/>"
          l="bin"

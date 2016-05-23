@@ -55,8 +55,8 @@ if [[ -z $1 ]]; then
   echo -e "$MSG_USAGE"
 elif [[ $USER == "root" ]]; then
   $PACMAN 2>&1 -U "$1"
-elif [[ $(($SUDO -v && $SUDO -n -l -U $USER $PACMAN -U) 2>/dev/null) == "$PACMAN -U" ]]; then
-  $SUDO -p "$MSG_PASS" $PACMAN 2>&1 -U "$1"
+elif [[ $(($SUDO -v -p "$MSG_PASS" && $SUDO -n -l -U $USER $PACMAN -U) 2>/dev/null) == "$PACMAN -U" ]]; then
+  $SUDO $PACMAN 2>&1 -U "$1"
 else
   echo -n "$MSG_PASSROOT"
   /bin/su 2>/dev/null -c 'echo ; $PACMAN 2>&1 -U "$1"'
