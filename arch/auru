@@ -5,7 +5,14 @@
 # license: GNU GPL v3↲
 
 
-function aurup() {
+
+function makesrcinfo {
+   set +o noclobber
+   makepkg --printsrcinfo > .SRCINFO
+}
+
+
+function aurup {
 
    if [[ ! -f PKGBUILD ]]; then
       echo "no PKGBUILD! in '$(pwd)'"
@@ -34,7 +41,7 @@ function aurup() {
       fi
    done
 
-   mksrcinfo
+   makesrcinfo
 
    if [[ ! -d .git ]]; then
       if [[ $(ssh $aur list-repos|grep $name|sed 's/^ //') != $name ]]; then

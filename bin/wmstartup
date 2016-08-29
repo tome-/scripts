@@ -7,7 +7,7 @@
 set +o noclobber
 
 
-CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/${0##*/}.conf"
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/grimi/${0##*/}.conf"
 
 INFO_MASK=0
 INFO_NAME=1
@@ -27,7 +27,6 @@ SAVE=
 DRYMODE=0
 POSITION=
 BACKGR=
-
 
 
 error() {
@@ -76,6 +75,7 @@ ispos() {
 add() {
    local -i i=0 j=${#WMSTARTUPTAB[@]} skip=0
    local oldifs="$IFS" IFS=":" tab=()
+   local cmd="${CMDLINE:-$NAME}"
    while [[ $i -lt $j ]]; do
       tab=(${WMSTARTUPTAB[$i]})
       if [[ ${tab[$INFO_NAME]} == $NAME ]]; then
@@ -87,7 +87,7 @@ add() {
    if [[ $skip -eq 0 ]]; then
       IFS="$oldifs"
       # mask:name:time:cmd:exist
-      WMSTARTUPTAB[$j]="${MASK:-0}:$NAME:${DELAY:-0}:${CMDLINE:-$NAME}:${EXIST:-0}:${BACKGR:-1}"
+      WMSTARTUPTAB[$j]="${MASK:-0}:$NAME:${DELAY:-0}:${cmd//\'/\"}:${EXIST:-0}:${BACKGR:-1}"
       if [[ $POSITION && $POSITION -ge 0 ]]; then
          position "$j"
       fi
@@ -261,6 +261,7 @@ done
 if [[ -f $CONFIG ]]; then
    source "$CONFIG"
 else
+   mkdir -p "${CONFIG%/*}"
    WMSTARTUPTAB=()
 fi
 
