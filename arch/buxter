@@ -34,8 +34,6 @@ case ${LANG%_*} in
       MSG_HE="ten tekst"
       MSG_EX="Pakiet już istnieje. Zbudować ponownie"
       ANS_EX="t"
-      MSG_32="Budować pakiet 32 bitowy"
-      ANS_32="t"
       MSG_CC="Budować z ccache"
       MSG_SO="Budować archiwum źródłowe"
       ANS_SO="t"
@@ -53,8 +51,6 @@ case ${LANG%_*} in
       MSG_HE="this message"
       MSG_EX="Package already exists. Build again"
       ANS_EX="y"
-      MSG_32="Build 32 bit package"
-      ANS_32="y"
       MSG_CC="Build with ccache"
       MSG_SO="Build source-only tarball"
       ANS_SO="y"
@@ -78,9 +74,9 @@ usage() {
 }
 
 
-while [ "${1:0:1}" == "-" ]; do
+while [[ ${1:0:1} == "-" ]]; do
    i=1
-   while [ "${1:$i:1}" ]; do
+   while [[ ${1:$i:1} ]]; do
       case "${1:$i:1}" in
          t)    TERMODE=1 ;;
          u)    UPDSUMS=1;   ARGSLINE+="-u " ;;
@@ -93,22 +89,22 @@ while [ "${1:0:1}" == "-" ]; do
 done
 
 
-if [ -n "$1" ]; then
+if [[ -n $1 ]]; then
    ARGSLINE+="'$1'"
 fi
 
 
-if [ -n "$TERMODE" ]; then
+if [[ -n $TERMODE ]]; then
    exec xterm -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
 fi
 
 
-if [ -n "$SHOWUSAGE" ]; then
+if [[ -n $SHOWUSAGE ]]; then
    usage
 fi
 
-if [ -z "$1" ]; then
-   if [ ! -f PKGBUILD ]; then
+if [[ -z $1 ]]; then
+   if [[ ! -f PKGBUILD ]]; then
       usage
    fi
 else
@@ -116,26 +112,25 @@ else
 fi
 
 
-
-if [ $(grep -w  -e "pkgname=.*" -e "pkgver=.*" -e "pkgrel=.*" "$PKGBNAME"|wc -l) -lt 3 ]; then
+if [[ $(grep -w  -e "pkgname=.*" -e "pkgver=.*" -e "pkgrel=.*" -e "package.*(" "$PKGBNAME"|wc -l) -lt 4 ]]; then
    usage
 fi
 
 
 source /etc/makepkg.conf
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf" ]; then
+if [[ -f ${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf ]]; then
    source "${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf"
-elif [ -f "$HOME/.makepkg.conf" ]; then
+elif [[ -f $HOME/.makepkg.conf ]]; then
    source "$HOME/.makepkg.conf"
 fi
 
-if [ "${PKGBNAME%/*}" != "$PKGBNAME" ]; then
+if [[ ${PKGBNAME%/*} != $PKGBNAME ]]; then
    cd "${PKGBNAME%/*}"
 fi
 
 source "$PKGBNAME"
 
-if [ "${arch[0]}" = "any" ]; then
+if [[ ${arch[0]} = "any" ]]; then
    ARCHPKG="any"
 else
    ARCHPKG="$CARCH"
@@ -144,32 +139,20 @@ fi
 PACKAGE="${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-${ARCHPKG}${PKGEXT}"
 
 
-if [ -n "$UPDSUMS" ]; then
+if [[ -n $UPDSUMS ]]; then
    echo -ne "\n${BLDYEL}==>${BLDWHI} ${MSG_UC} ? ${MSG_yN} ${TXTRES}"
    read ures
-   if [ "${ures,,}" == "$ANS_UC" ]; then
+   if [[ ${ures,,} == $ANS_UC ]]; then
       $UPDSUMCMD
    fi
    unset ures
 fi
 
-if [ "${ARCHPKG}" == "x86_64" ] && [ "${arch[0]}" == "i686" ]; then
-   if [ -n "$(pacman -Qq gcc-multilib)" ]; then
-      echo -en "\n${BLDYEL}==>${BLDWHI} ${MSG_32} ? ${MSG_yN} ${TXTRES}"
-      read res32
-      if [ "${res32,,}" == "$ANS_32" ]; then
-         MKPKGCMD="linux32 $MKPKGCMD"
-         PACKAGE="${pkgname[0]}-${epoch:+$epoch:}${pkgver}-${pkgrel}-i686${PKGEXT}"
-      fi
-      unset res32
-   fi
-fi
-
-if [ -f "${PACKAGE}" ]; then
+if [[ -f ${PACKAGE} ]]; then
    echo -e "\n${BLDRED}==> ${BLDYEL}${PACKAGE}"
    echo -ne "${BLDRED}==>${BLDWHI} ${MSG_EX} ? ${MSG_yN} ${TXTRES}"
    read bres
-   if [ "${bres,,}" == "$ANS_EX" ]; then
+   if [[ ${bres,,} == $ANS_EX ]]; then
       MKPKGCMD+="f"
    else
       MKPKGCMD=""
@@ -177,14 +160,14 @@ if [ -f "${PACKAGE}" ]; then
    unset bres
 fi
 
-if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ] && [ -x /usr/bin/ccache ]; then
+if [[ -n $MKPKGCMD && $ARCHPKG != "any" && -x /usr/bin/ccache ]]; then
    for x in ${BUILDENV[@]}; do
-      if [ "$x" == "ccache" ]; then
+      if [[ $x == ccache ]]; then
          MSG_CC="${BLDYEL}==>${BLDWHI} ${MSG_CC} ?"
-         if [ -z "$CCACHE_DISABLE" ]; then
+         if [[ -z $CCACHE_DISABLE ]]; then
             echo -en "\n${MSG_CC} ${MSG_Yn} ${TXTRES}"
             read cres
-            if [ "${cres,,}" == "${ANS_TB[$ANNOP]}" ]; then
+            if [[ ${cres,,} == ${ANS_TB[$ANNOP]} ]]; then
                export CCACHE_DISABLE=1
             else
                unset CCACHE_DISABLE
@@ -192,7 +175,7 @@ if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ] && [ -x /usr/bin/ccache ]; then
          else
             echo -en "\n${MSG_CC} ${MSG_yN} ${TXTRES}"
             read cres
-            if [ "${cres,,}" == "${ANS_TB[$ANYES]}" ]; then
+            if [[ ${cres,,} == ${ANS_TB[$ANYES]} ]]; then
                unset CCACHE_DISABLE
             else
                export CCACHE_DISABLE=1
@@ -204,25 +187,25 @@ if [ -n "$MKPKGCMD" ] && [ "$ARCHPKG" != "any" ] && [ -x /usr/bin/ccache ]; then
    done
 fi
 
-if [ -n "$MKPKGCMD" ]; then
+if [[ -n $MKPKGCMD ]]; then
    $MKPKGCMD
 fi
 
-if [ -n "$GENSOURCE" ]; then
+if [[ -n $GENSOURCE ]]; then
    echo -en "\n${BLDYEL}==>${BLDWHI} ${MSG_SO} ? ${MSG_yN} ${TXTRES}"
    read sres
-   if [ "${sres,,}" == "$ANS_SO" ]; then
+   if [[ ${sres,,} == $ANS_SO ]]; then
       $MKSRCMD
    fi
    unset sres
 fi
 
 
-if [ -d "$BUILDDIR" ]; then
-   [ -d "$BUILDDIR/${pkgname[0]}" ] && rm -fr "$BUILDDIR/${pkgname[0]}"
+if [[ -d $BUILDDIR ]]; then
+   [[ -d $BUILDDIR/${pkgname[0]} ]] && rm -fr "$BUILDDIR/${pkgname[0]}"
 else
-   [ -d src ] && rm -fr src
-   [ -d pkg ] && rm -fr pkg
+   [[ -d src ]] && rm -fr src
+   [[ -d pkg ]] && rm -fr pkg
 fi
 
 

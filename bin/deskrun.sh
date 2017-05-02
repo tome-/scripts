@@ -20,11 +20,12 @@ usage() {
 
 
 autostart() {
-   [ -z "$1" ] && usage
+   [[ -z $1 ]] && usage
 
    local DESK="$1"
    local -A tab
-   local app auto nr cmd
+   local -i nr=0
+   local app auto cmd run
 
    for app in /etc/xdg/autostart/*.desktop; do
       tab[${app##*/}]="$app"
@@ -33,20 +34,21 @@ autostart() {
       tab[${app##*/}]="$app"
    done
 
-   for app in ${tab[@]}; do
+   for app in "${tab[@]}"; do
       if ( ! grep -iq "hidden=true" "$app" ); then
          auto="$(grep -iw "onlyshowin=.*$DESK" "$app")"
-         if [ -z "$auto" ]; then
+         if [[ -z $auto ]]; then
             grep -iq "onlyshowin=" "$app" || \
                { grep -iwq "notshowin=.*$DESK" "$app" || auto=1; }
          fi
-         if [ -n "$auto" ]; then
-            cmd="$(grep -i 'exec=' "$app"|grep -vi 'tryexec=')"
-            if [ -n "$TESTMODE" ]; then
-               (( nr++ ))
+         if [[ -n $auto ]]; then
+            cmd="$(grep -iw 'exec=*' "$app")"
+            if [[ -n $TESTMODE ]]; then
+               nr+=1
                echo -e "$nr) $app:\n\t ==> ${cmd:5}"
             else
-               ( sleep 0.1 && eval "${cmd:5}" )&
+               run="( sleep 0.1 && ("${cmd:5}"&) )&"
+               eval "$run"
             fi
          fi
       fi
@@ -55,37 +57,42 @@ autostart() {
 
 
 runmode() {
-   [ -z "$1" ] && usage
+   [[ -z $1 ]] && usage
 
    local file="$1"
-   local cmd
+   local cmd term run
 
-   [ "$file" == "${file%.desktop}" ] && file+=".desktop"
+   [[ $file == ${file%.desktop} ]] && file+=".desktop"
 
-   if [ "${file##*/}" == "$file" ]; then
-      if [ -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/$file" ]; then
+   if [[ ${file##*/} == $file ]]; then
+      if [[ -f ${XDG_DATA_HOME:-$HOME/.local/share}/applications/$file ]]; then
          file="${XDG_DATA_HOME:-$HOME/.local/share}/applications/$file"
-      elif [ -f "/usr/share/applications/$file" ]; then
+      elif [[ -f /usr/share/applications/$file ]]; then
          file="/usr/share/applications/$file"
       fi
    fi
 
-   if [ -f "$file" ]; then
-      cmd="$(grep -i 'exec=' "$file"|grep -vi 'tryexec=')"
+   if [[ -f $file ]]; then
+      cmd="$(grep -iw 'exec=*' "$file")"
       cmd="${cmd:5}" ; cmd="${cmd%%\%*}"
-      if [ -n "$TESTMODE" ]; then
-         echo -e "${file##*/}:\n\t ==> ${cmd}"
+      term="$(grep -i 'terminal=true' "$file")"
+      if [[ -n $term ]]; then
+         term="xterm -e "
+      fi
+      if [[ -n $TESTMODE ]]; then
+         echo -e "${file##*/}:\n\t ==> ${term}${cmd}"
       else
-         ( sleep 0.1 && eval exec "${cmd}" )&
+         run="( sleep 0.1 && ("${term}${cmd}"&) )&"
+         eval "$run"
       fi
    fi
 }
 
 
 
-[ -z "$1" ] && usage
+[[ -z $1 ]] && usage
 
-while [ -n "$1" ]; do
+while [[ -n $1 ]]; do
    case "$1" in
       -t) TESTMODE=1 ;;
       -a) autostart "$2" ; break ;;

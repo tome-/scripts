@@ -23,10 +23,10 @@ set -o nounset                              # Treat unset variables as an error
 EDITOR="xterm -g 100x30 -e vim"
 
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
-DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xprofile .xsession .vimrc .asoundrc .tmux.conf \
-      .bash_profile "$CONF/fontconfig/fonts.conf" "$CONF/conky/conky.conf" "$CONF/mpd/mpd.conf" \
-      "$CONF/pacman/makepkg.conf")
+DATA="$HOME/.local"
+DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xsession .vimrc .asoundrc .tmux.conf \
+      .bash_profile .pam_environment "$CONF/fontconfig/fonts.conf" "$CONF/conky/conky.conf" \
+      "$CONF/mpd/mpd.conf" "$CONF/pacman/makepkg.conf")
 BINS="$DATA/bin"
 
 
