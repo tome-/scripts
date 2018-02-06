@@ -44,14 +44,14 @@ function aurup {
    makesrcinfo
 
    if [[ ! -d .git ]]; then
-      if [[ $(ssh $aur list-repos|grep $name|sed 's/^ //') != $name ]]; then
-         ssh $aur setup-repo "$name"
-      fi
+      #if [[ $(ssh $aur list-repos|grep $name|sed 's/^ //') != $name ]]; then
+      #   ssh $aur setup-repo "$name"
+      #fi
       git clone ssh://$aur/$name.git/ git/
       if [[ -d git/.git ]]; then
          mv git/.git ./
-         rm git/*
-         rmdir git
+         rm -f git/*
+         [[ -d git ]] && rmdir git
       else
          echo "Problem with cloning ..."
          return 1

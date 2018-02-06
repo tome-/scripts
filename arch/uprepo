@@ -7,34 +7,34 @@
 
 
 case ${LANG%_*} in
-    pl) USAGEMSG="Składnia: [-a(tryb AUR: cower jako wrapper)] [-n(bez koloru)]"
+   pl) USAGEMSG="Składnia: [-a(tryb AUR: wymagany cower)] [-c(kolory dla conky)] [-n(tryp liczbowy)]"
         NOAVAILMSG="niedostępne"
     ;;
 
-     *) USAGEMSG="Usage: [-a(AUR mode: cower as wrapper)] [-n(nocolors)]"
+ *) USAGEMSG="Usage: [-a(AUR mode: cower as wrapper)] [-c(colors for conky)] [-n(number mode)]"
         NOAVAILMSG="not available"
     ;;
 esac
 
-if [ "$1" = "-h" ]; then
+if [[ $1 = "-h" ]]; then
    echo "$USAGEMSG"
    exit 1
 fi
 
-if [ "$1" != "-a" ]; then
-    PACNR=$(LANG=C pacman -Qqu --color=never | grep -Ev "^($ignore)$" | wc -l)
+if [[ $1 != "-a" ]]; then
+   PACNR=$(LANG=C pacman -Qqu --color=never | grep -Ev "^($ignore)$" | wc -l)
 else
-    ping -w 3 -c 1 aur.archlinux.org >/dev/null ; AUROL=$?
-    COWER=$(type -fp cower)
-    if [[ $AUROL -eq 0 && $COWER ]]; then
-        PACNR=$(LANG=C $COWER -u --color=never | wc -l)
-    else
-        PACNR="$NOAVAILMSG"
-    fi
-    shift
+   ping -w 3 -c 1 aur.archlinux.org >/dev/null ; AUROL=$?
+   COWER=$(type -fp cower)
+   if [[ $AUROL -eq 0 && $COWER ]]; then
+      PACNR=$(LANG=C $COWER -u --color=never | wc -l)
+   else
+      PACNR="$NOAVAILMSG"
+   fi
+   shift
 fi
 
-if [ "$1" != "-n" ]; then
+if [[ $1 == "-c" ]]; then
    case $PACNR in
       0)       SETCOL='${color white}' ;;
       [1-4])   SETCOL='${color yellow}' ;;
@@ -42,8 +42,13 @@ if [ "$1" != "-n" ]; then
       *)       SETCOL='${color red}' ;;
    esac
    RESCOL='${color}'
+   shift
 fi
 
+if [[ $1 == "-n" ]]; then
+   MSG="$PACNR"
+   shift
+fi
 
 SetMsg() {
    case $PACNR in
@@ -54,24 +59,26 @@ SetMsg() {
 }
 
 SetMsg_pl() {
-    NR1=${PACNR:${#PACNR}-1}
-    NR2=${PACNR:${#PACNR}-2}
-    if [ $PACNR = 0 ];then
-        MSG="aktualne"
-    elif [ $PACNR = 1 ];then
-        MSG="1 paczka"
-    elif [ $NR1 -ge 2 ] && [ $NR1 -le 4 ] && [ $[$NR2-$NR1] -ne 10 ]; then
-        MSG="$PACNR paczki"
-    else
-        MSG="$PACNR paczek"
-    fi
+   local -i NR1=${PACNR:${#PACNR}-1}
+   local -i NR2=${PACNR:${#PACNR}-2}
+   if [[ $PACNR = 0 ]]; then
+      MSG="aktualne"
+   elif [[ $PACNR = 1 ]]; then
+      MSG="1 paczka"
+   elif [[ $NR1 -ge 2 ]] && [[ $NR1 -le 4 ]] && [[ $[$NR2-$NR1] -ne 10 ]]; then
+      MSG="$PACNR paczki"
+   else
+      MSG="$PACNR paczek"
+   fi
 }
 
-if [ "$PACNR" != "$NOAVAILMSG" ]; then
-    case ${LANG%_*} in
-        pl) SetMsg_pl;;
-        *)  SetMsg;;
-    esac
+if [[ -z $MSG ]]; then
+   if [[ $PACNR != $NOAVAILMSG ]]; then
+      case ${LANG%_*} in
+         pl) SetMsg_pl;;
+         *)  SetMsg;;
+      esac
+   fi
 fi
 
 echo ${SETCOL}${MSG}${RESCOL}

@@ -38,7 +38,7 @@ esac
 
 ## Current term mode ##
 if [[ $1 == "-t" ]]; then
-  exec $XTERM -g 74x16 -T "..:: $NAME ::.." -e "echo ; $0 '$2' ; echo -e '\n$MSG_HIT' ; read"
+  exec $XTERM -class "$NAME" -g 74x16 -T "..:: $NAME ::.." -e "echo ; $0 '$2' ; echo -e '\n$MSG_HIT' ; read"
 fi
 
 

@@ -25,8 +25,8 @@ EDITOR="xterm -g 100x30 -e vim"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA="$HOME/.local"
 DOTS=(.bashrc .xinitrc .Xdefaults .Xresources .xsession .vimrc .asoundrc .tmux.conf \
-      .bash_profile .pam_environment "$CONF/fontconfig/fonts.conf" "$CONF/conky/conky.conf" \
-      "$CONF/mpd/mpd.conf" "$CONF/pacman/makepkg.conf")
+      .bash_profile .pam_environment "$CONF/fontconfig/fonts.conf" "$CONF/dunstrc" \
+      "$CONF/conky/conky.conf" "$CONF/mpd/mpd.conf" "$CONF/pacman/makepkg.conf")
 BINS="$DATA/bin"
 
 

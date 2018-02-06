@@ -27,6 +27,8 @@ autostart() {
    local -i nr=0
    local app auto cmd run
 
+   [[ ${DESK,,} == "any" ]] && DESK=""
+
    for app in /etc/xdg/autostart/*.desktop; do
       tab[${app##*/}]="$app"
    done
@@ -35,13 +37,14 @@ autostart() {
    done
 
    for app in "${tab[@]}"; do
-      if ( ! grep -iq "hidden=true" "$app" ); then
-         auto="$(grep -iw "onlyshowin=.*$DESK" "$app")"
-         if [[ -z $auto ]]; then
-            grep -iq "onlyshowin=" "$app" || \
-               { grep -iwq "notshowin=.*$DESK" "$app" || auto=1; }
+      auto=0
+      if ( ! grep -i "hidden=true" "$app"|grep -ivq "#.*hidden" ); then
+         (grep -iw "onlyshowin=.*$DESK" "$app"|grep -ivq "#.*onlyshowin") && auto=1
+         if [[ $auto -ne 1 ]]; then
+            (grep -i "onlyshowin=" "$app"|grep -ivq "#.*onlyshowin") || \
+               { (grep -iw "notshowin=.*$DESK" "$app"|grep -ivq "#.*notshowin") || auto=1; }
          fi
-         if [[ -n $auto ]]; then
+         if [[ $auto -eq 1 ]]; then
             cmd="$(grep -iw 'exec=*' "$app")"
             if [[ -n $TESTMODE ]]; then
                nr+=1
@@ -73,7 +76,7 @@ runmode() {
    fi
 
    if [[ -f $file ]]; then
-      cmd="$(grep -iw 'exec=*' "$file")"
+      cmd="$(grep -iw 'exec=.*' "$file"|grep -m1 -iv "#.*exec")"
       cmd="${cmd:5}" ; cmd="${cmd%%\%*}"
       term="$(grep -i 'terminal=true' "$file")"
       if [[ -n $term ]]; then

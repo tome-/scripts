@@ -95,7 +95,7 @@ fi
 
 
 if [[ -n $TERMODE ]]; then
-   exec xterm -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
+   exec xterm -class "$NAME" -fg gray -bg black -T "::: $NAME :::" -e "$0 $ARGSLINE; echo -e '\n\n${BLDYEL}:::${BLDWHI}  ENTER  ${BLDYEL}:::' ; read"
 fi
 
 
